@@ -1,2 +1,2 @@
-# labris
+# labrys
 A toolkit for web autonomy.
