@@ -60,11 +60,11 @@ let us provide the OS with Labrys pre-installed and already set up.
 
 A labrys is a two-edged axe. It has many fun associations:
 
-1. Being an axe, a labrys can be used to hack things! Or hack them to pieces! For instance,
-   a misbehaving computer, harassers, or capitalism!
+- Being an axe, a labrys can be used to hack things! Or hack them to pieces! For instance,
+  a misbehaving computer, harassers, or capitalism!
 
-2. The word "labrys" is evocative of the word "labyrinth", especially when spoken, and the
-   labrys project makes extensive use of TOR's labyrinthine connections to hide labrys
-   servers and protect the privacy of the people running them.
+- The word "labrys" is evocative of the word "labyrinth", especially when spoken, and the
+  labrys project makes extensive use of TOR's labyrinthine connections to hide labrys
+  servers and protect the privacy of the people running them.
 
-3. The labrys is a traditional symbol of lesbianism.
+- The labrys is a traditional symbol of lesbianism.
