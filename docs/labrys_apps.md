@@ -17,3 +17,7 @@ former does not, but the former approach makes it feasible for someone to bombar
 with extraneous notifications. Care has to be taken in how to design this kind of thing, but
 with Labrys, there is at least the possibility of making design decisions about them in the
 first place.
+
+Another consideration is the means by which access control is performed. Does the app as a
+whole get put into the access control system, do its endpoints, its logical resources
+(e.g. the tweets, etc.), or some or all of these?? 
