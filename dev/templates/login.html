@@ -1,7 +1,7 @@
 <html>
   <body>
     <p>Please log in to access the page <a href="{{ return_address }}">{{ return_address }}</a>.</p>
-    <form action="/subscription/login" method="post">
+    <form action="/login" method="post">
       <input name="identity_server" placeholder="identity server address" /> 
       <input hidden name="return_address" value="{{ return_address }}" />
       <input type="submit" />
