@@ -2,7 +2,6 @@ import base64
 import bcrypt
 import nacl.signing
 import os
-import  shutil
 import src.auth as auth
 import src.passwords as passwords
 import time
@@ -21,9 +20,15 @@ print('*                            *')
 print('******************************')
 
 
-# copy data_proto dir
-shutil.copytree('data_template', 'data')
 
+os.makedirs('data')
+os.makedirs(os.path.join('data', 'authentication'))
+os.makedirs(os.path.join('data', 'authentication', 'auth_state'))
+os.makedirs(os.path.join('data', 'authentication', 'auth_tokens'))
+os.makedirs(os.path.join('data', 'identity'))
+os.makedirs(os.path.join('data', 'permissions'))
+os.makedirs(os.path.join('data', 'permissions', 'groups'))
+os.makedirs(os.path.join('data', 'permissions', 'restricted_user_content'))
 
 # blade_url 
 time.sleep(SLEEP_TIME)
