@@ -3,3 +3,4 @@
 *.pyc
 .DS_Store
 ._*
+/dev/data
