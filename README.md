@@ -36,7 +36,7 @@ A labrys is a two-edged axe. It has many fun associations:
 
 # Running a local test blade
 
-To run a blade locally, you'll need to use Flask. The standard Flask procedure for running a server should work:
+To run a blade locally, you'll need to use Flask. The standard Flask procedure for running a server should work. From within `dev/` run
 
 ```
 $ export FLASK_APP=blade.py; export FLASK_ENV=development; flask run
