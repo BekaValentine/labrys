@@ -1,14 +1,19 @@
 <html>
   <body>
+    {% if requester and state and return_address %}
     <p>The site <a href="{{ requester }}">{{ requester }}</a> is asking you to identify yourself.</p>
     <p>Upon authentication, it will redirect you to <a href="{{ return_address }}">{{ return_address }}</a>.</p>
+    {% else %}
+    <p>You are authenticating with this identity server.</p>
+    <p>This is not part of any other website's login process and you will not be directed anywhere afterwards.</p>
+    {% endif %}
     <p>If you wish to do this, please enter your password below.</p>
     <form action="/identity/authenticate" method="post">
       <input type="password" name="password" />
-      <input hidden name="requester" value="{{ requester }}" />
-      <input hidden name="state" value="{{ state }}" />
-      <input hidden name="return_address" value="{{ return_address }}" />
-      <input type="submit" />
+      {% if requester %}<input hidden name="requester" value="{{ requester }}" />{% endif %}
+      {% if state %}<input hidden name="state" value="{{ state }}" />{% endif %}
+      {% if return_address %}<input hidden name="return_address" value="{{ return_address }}" />{% endif %}
+      <input type="submit" value="Authenticate"/>
     </form>
   </body>
 </html>

@@ -1,0 +1,14 @@
+<html>
+  <body>
+    <p>Welcome to this Labrys Blade! We hope you enjoy your time here.</p>
+    <p>Click <a href="/identity/authenticate">here</a> to authenticate with this blade.</p>
+    {% if admin_servers %}
+    <p>You may control this machine from the following servers:</p>
+    <ul>
+    {% for server in admin_servers %}
+      <li>{{ server }}</li>
+    {% endfor %}
+    </ul>
+    {% endif %}
+  </body>
+</html>

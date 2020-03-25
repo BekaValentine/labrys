@@ -47,7 +47,7 @@ with open(os.path.join(DATA_DIR, 'admins.txt'), 'r') as f:
 # The Blade root. Doesn't do anything interesting right now.
 @app.route('/', methods = ['GET'])
 def labrys_home():
-  return 'Welcome to this Labrys Blade! We hope you enjoy your time here. You may control this machine from the following servers: %s' % ' '.join(ADMIN_SERVERS)
+  return render_template('main_page.html', admin_servers=ADMIN_SERVERS)
 
 
 
@@ -55,22 +55,20 @@ def labrys_home():
 # their display name, a short bio, and their avatar if they have one.
 @app.route('/identity', methods = ['GET'])
 def identity():
-  
-  display_name = "(no display name)"
+
   with open(DISPLAY_NAME_FILE, 'r') as f:
     display_name = f.read()
-  
-  bio = '(no bio)'
+
   with open(BIO_FILE, 'r') as f:
     bio = f.read()
-  
+
   avatar = None
   avatar_candidates =\
     [ f for f in os.listdir(IDENTITY_DIR)\
         if re.search('^avatar\.(png|PNG|jpg|JPG|jpeg|JPEG|gif|GIF)$', f) ]
   if avatar_candidates:
     avatar = "/identity/" + avatar_candidates[0]
-  
+
   return render_template('identity.html',
                          display_name = display_name,
                          bio = bio,
@@ -98,49 +96,61 @@ def identity_deauthenticate():
 @app.route('/identity/authenticate', methods = ['GET','POST'])
 def identity_authenticate():
   if request.method == 'GET':
-    
+
     requester = request.args.get('requester')
     state = request.args.get('state')
     return_address = request.args.get('return_address')
-    
-    requester_no_slash = requester if requester[-1] != '/' else requester[:-1]
-    redirect_url = requester_no_slash + '/login'
-    
-    if requester and state and return_address:
-      if 'logged_in' in session:
-        auth_token = auth.make_auth_token(AUTH_TOKEN_DIR,
-                                          requester,
-                                          state)
-        return redirect(redirect_url + '?auth_token=' + auth_token + '&state=' + state + '&return_address=' + return_address)
-      else:
-        return render_template('identity_authenticate.html',
-                               requester = requester,
-                               state = state,
-                               return_address = return_address)
+
+    if requester is None and state is None and return_address is None:
+
+        if 'logged_in' in session:
+            return render_template('already_authenticated.html')
+        else:
+            return render_template('identity_authenticate.html')
+
+    elif requester is not None and state is not None and return_address is not None:
+        requester_no_slash = requester if requester[-1] != '/' else requester[:-1]
+        redirect_url = requester_no_slash + '/login'
+
+        if 'logged_in' in session:
+            auth_token = auth.make_auth_token(AUTH_TOKEN_DIR, requester, state)
+            return redirect(redirect_url + '?auth_token=' + auth_token + '&state=' + state + '&return_address=' + return_address)
+        else:
+            return render_template('identity_authenticate.html',
+                                   requester = requester,
+                                   state = state,
+                                   return_address = return_address)
     else:
       return "bad request", 400
-  
+
   elif request.method == 'POST':
-    requester = html.unescape(request.form['requester'])
-    state = html.unescape(request.form['state'])
-    return_address = html.unescape(request.form['return_address'])
     submitted_password = request.form['password']
-    
-    if submitted_password and requester and state and return_address:
-     
+
+    if submitted_password:
+
       with open(PASSWORD_HASH_FILE, 'r') as f:
         password_hash = f.read().strip()
-      
+
       if passwords.check_password(submitted_password, password_hash):
-        auth_token = auth.make_auth_token(AUTH_TOKEN_DIR,
-                                          requester,
-                                          state)
         session['logged_in'] = 'logged_in'
-        requester_no_slash = requester if '/' != requester[-1] else requester[:-1] 
-        return redirect(requester_no_slash + '/login?auth_token=' + auth_token + '&return_address=' + return_address +  '&state=' + state)
+
+
+
+        if 'requester' in request.form and 'state' in request.form and 'return_address' in request.form:
+            requester = html.unescape(request.form['requester'])
+            state = html.unescape(request.form['state'])
+            return_address = html.unescape(request.form['return_address'])
+            auth_token = auth.make_auth_token(AUTH_TOKEN_DIR,
+                                              requester,
+                                              state)
+            requester_no_slash = requester if '/' != requester[-1] else requester[:-1]
+            return redirect(requester_no_slash + '/login?auth_token=' + auth_token + '&return_address=' + return_address +  '&state=' + state)
+        else:
+            return redirect('#')
+
       else:
         return 'unauthorized', 401
-      
+
     else:
       return 'bad request', 400
 
@@ -149,22 +159,22 @@ def identity_authenticate():
 # The identity/verify endpoint is used to confirm that an auth token is valid.
 @app.route('/identity/verify', methods = ['GET'])
 def identity_verify():
-  
+
   auth_token = request.args.get('auth_token')
   requester = request.args.get('requester')
   state = request.args.get('state')
-  
+
   if auth_token and requester and state:
-    
+
     if auth.check_auth_token(AUTH_TOKEN_DIR, auth_token, requester, state):
       result = ('ok', 200)
     else:
       result = ('unauthorized, 401')
-    
+
     auth.delete_auth_token(AUTH_TOKEN_DIR, auth_token)
-    
+
     return result
-    
+
   else:
     return 'bad request', 400
 
@@ -174,7 +184,7 @@ def identity_verify():
 # associated with the blade.
 @app.route('/identity/public_signing_key', methods = ['GET'])
 def identity_public_signing_key():
-  
+
   with open(PUBLIC_SIGNING_KEY_FILE, 'r') as f:
     return f.read().strip()
 
@@ -210,7 +220,7 @@ def user_content(path):
 # serves the login page
 @app.route('/login', methods = ['GET','POST'])
 def login():
-  
+
   if request.method == 'GET':
     print('login get')
     auth_token = request.args.get('auth_token')
@@ -220,21 +230,21 @@ def login():
     if auth_token and auth_state and return_address:
       # successful authentication elsewhere. verify the auth token is real
       # then send log the user in by settng a cookie and  send them to return_address
-      
+
       # get the auth server for this state
       # ask it to verify the auth attempt
       # if it didn't, error
       # if it did, store login state and redirect to return_address
       print('successful authentication elsewhere')
       id_server = auth.get_auth_state_identity_server(AUTH_STATE_DIR, auth_state)
-      
+
       if not id_server: return 'bad request', 400
-      
+
       id_server_no_slash = id_server if id_server[-1] != '/' else id_server[:-1]
-      
+
       res = requests.get(url = id_server_no_slash + '/identity/verify', params = { 'auth_token': auth_token, 'state': auth_state, 'requester': BLADE_URL })
       auth.delete_auth_state(AUTH_STATE_DIR, auth_state)
-      
+
       if res.status_code == 200:
         print('verified authentication')
         res2 = requests.get(url = id_server_no_slash + '/identity/public_signing_key')
@@ -262,27 +272,27 @@ def login():
         else:
           return 'unauthorized', 401
       else:
-        return 'unauthorized', 401 
-    
+        return 'unauthorized', 401
+
     elif return_address:
-      # user needs to log in elsewhere 
-      
+      # user needs to log in elsewhere
+
       return render_template('login.html',
                              return_address = return_address)
     else:
       return 'bad request', 400
-    
+
   elif request.method == 'POST':
     print('login post')
     identity_server = request.form['identity_server']
     return_address = request.form['return_address']
-    
+
     if identity_server and return_address:
-      
+
       identity_server_no_slash = identity_server if identity_server[-1] != '/' else identity_server[:-1]
       auth_state = auth.make_auth_state(AUTH_STATE_DIR, identity_server)
-      
+
       return redirect(identity_server_no_slash + '/identity/authenticate?requester=' + BLADE_URL + '&state=' + auth_state + '&return_address=' + return_address)
-      
+
     else:
       return 'bad request', 400

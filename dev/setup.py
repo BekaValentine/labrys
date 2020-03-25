@@ -21,16 +21,17 @@ print('******************************')
 
 
 
-os.makedirs('data')
-os.makedirs(os.path.join('data', 'authentication'))
-os.makedirs(os.path.join('data', 'authentication', 'auth_state'))
-os.makedirs(os.path.join('data', 'authentication', 'auth_tokens'))
-os.makedirs(os.path.join('data', 'identity'))
-os.makedirs(os.path.join('data', 'permissions'))
-os.makedirs(os.path.join('data', 'permissions', 'groups'))
-os.makedirs(os.path.join('data', 'permissions', 'restricted_user_content'))
+os.makedirs('data', exist_ok=True)
+os.makedirs(os.path.join('data', 'authentication'), exist_ok=True)
+os.makedirs(os.path.join('data', 'authentication', 'auth_state'), exist_ok=True)
+os.makedirs(os.path.join('data', 'authentication', 'auth_tokens'), exist_ok=True)
+os.makedirs(os.path.join('data', 'identity'), exist_ok=True)
+os.makedirs(os.path.join('data', 'permissions'), exist_ok=True)
+os.makedirs(os.path.join('data', 'permissions', 'groups'), exist_ok=True)
+os.makedirs(os.path.join('data', 'permissions', 'restricted_user_content'), exist_ok=True)
 
-# blade_url 
+
+# blade_url
 time.sleep(SLEEP_TIME)
 print()
 print()
@@ -38,6 +39,30 @@ canonical_url = input('What is the canonical url to use for this blade?\n\n> ')
 
 with open(os.path.join('data', 'blade_url.txt'), 'w') as f:
   f.write(canonical_url)
+
+
+# display name
+time.sleep(SLEEP_TIME)
+print()
+print()
+display_name = input('What display name should this blade use for you?\n\n> ')
+if '' == display_name:
+    display_name = 'AnonymousUser'
+
+with open(os.path.join('data', 'identity', 'display_name.txt'), 'w') as f:
+    f.write(display_name)
+
+
+# bio
+time.sleep(SLEEP_TIME)
+print()
+print()
+bio = input('What bio text should this blade use for you?\n\n> ')
+if '' == bio:
+    bio = 'No bio.'
+
+with open(os.path.join('data', 'identity', 'bio.txt'), 'w') as f:
+    f.write(bio)
 
 
 # password_hash
