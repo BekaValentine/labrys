@@ -47,7 +47,7 @@ everyone wants or is able to to spend money every month just to run a webserver,
 most ISPs get very upset if you run one from your home computer. Onion Services,
 however, can perfectly well run on your home ISP without getting their attention, and
 they have the extra benefit of entirely masking your real world identity so that
-your Labrys computer can't be used to doxx you. 
+your Labrys computer can't be used to doxx you.
 
 The set up we have in mind, in fact, is a Raspberry Pi or similar little computer,
 which is just thrown onto a person's home network. We especially aim to have something
@@ -68,3 +68,14 @@ A labrys is a two-edged axe. It has many fun associations:
   servers and protect the privacy of the people running them.
 
 - The labrys is a traditional symbol of lesbianism.
+
+
+
+# Running a local test blade
+
+To run a blade locally, you'll need to use Flask. The standard Flask procedure
+for running a server should work:
+
+```
+$ export FLASK_APP=blade.py; export FLASK_ENV=development; flask run
+```
