@@ -25,7 +25,6 @@ AUTHENTICATION_DIR       = os.path.join(DATA_DIR, 'authentication')
 PASSWORD_HASH_FILE       = os.path.join(AUTHENTICATION_DIR, 'password_hash.txt')
 AUTH_TOKEN_DIR           = os.path.join(AUTHENTICATION_DIR, 'auth_tokens')
 AUTH_STATE_DIR           = os.path.join(AUTHENTICATION_DIR, 'auth_state')
-USER_CONTENT_DIR         = os.path.join(app.root_path, 'user_content')
 PERMISSIONS_DIR          = os.path.join(DATA_DIR, 'permissions')
 
 

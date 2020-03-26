@@ -62,49 +62,26 @@ The Blade backend is a flat file system organized as follows:
 LABRYS_ROOT/
 ├── README.md
 ├── LICENSE.md
-├── setup.py : the setup script
-├── blade.py : the blade server
 ├── docs/ : contains documentation about Labrys
-├── resources/ : contains resources used to set up a Blade
-├── src/ : additional python files
-├── static/ : the static content of the admin frontend and identity frontend
-│   ├── html/ : html source code
-│   └── css/ : css source code
-├── templates/ : html templates
-│   ├── identity.html
-│   ├── identity_authenticate.html
-│   └── login.html
-├── data/ : holds all of the backend data
-│   ├── admins.txt : holds the list of blade public signing keys which
-│   │     can administer this blade
-│   ├── authentication/ : holds data pertaining to authenticating the blade user
-│   │   ├── password_hash.txt : bcrypt hash of the user's password + salt
-│   │   └── auth_tokens/ : auth tokens
-│   ├── blade_url.txt : contains the canonical URL of this blade
-│   ├── identity/ : holds the data pertaining to the Blade owner's public
-│   │     identity use for viewing followers etc.
-│   │   ├── display_name.txt : the Blade owner's display name
-│   │   ├── bio.txt : the Blade owner's bio, short self description, etc.
-│   │   ├── avatar.{png,jpg,gif} : the Blade owner's avatar
-│   │   ├── private_signing_key.txt : the private portion of the signing key
-│   │   │     used to identify this blade
-│   │   └── public_signing_key.txt : the public portion of the signing key used
-│   │         to identify this blade
-│   └── permissions/ : specifies permissions for restricted static content items
-│       ├── groups/ : the groups that have various permissions
-│       └── restricted_user_content : holds a mapping of items (both
-│             directories and files) to people and groups who can view them.
-│             see the Permissions section for more info on format. The structure
-│             used in this directory is as follows: For every directory in the
-│             user_content/ directory, including user_content/ itself, there is
-│             a pair of directories named `directories` and `files`, each of
-│             which contains either the permissions for the directories, or
-│             files, as appropriate. For each file named `$N`, there may be a
-│             file `$N.groups.txt` which lists the groups that can access the
-│             file, and there may be a file `$N.people.txt` which lists the
-│             people that can access the file. For each directory, the may be
-│             files `groups.txt` and `people.txt` that do the same.
-├── session_secret_key.txt : holds the secret key to use for session management
-└── user_content/ : holds user content which will be served on the static site
-      component, subject to permissions
+└── dev/ : contains the primary code and relevant data to run the blade
+    ├── setup.py : the setup script
+    ├── blade.py : the blade server
+    ├── src/ : additional python files
+    ├── templates/ : html templates
+    └── data/ : holds all of the backend data
+        ├── admins.txt : holds the list of blade public signing keys which can administer this blade
+        ├── blade_url.txt : contains the canonical URL of this blade
+        ├── session_secret_key.txt : holds the secret key to use for session management
+        ├── authentication/ : holds data pertaining to authenticating the blade user
+        │   ├── password_hash.txt : bcrypt hash of the user's password + salt
+        │   ├── auth_state/ : auth states
+        │   └── auth_tokens/ : auth tokens
+        │   ├── identity/ : holds the data pertaining to the Blade owner's public identity use for viewing followers etc.
+        │   │   ├── avatar.{png,jpg,gif} : the Blade owner's avatar
+        │   │   ├── bio.txt : the Blade owner's bio, short self description, etc.
+        │   │   ├── display_name.txt : the Blade owner's display name
+        │   │   ├── private_signing_key.txt : the private portion of the signing key used to identify this blade
+        │   │   └── public_signing_key.txt : the public portion of the signing key used to identify this blade
+        │   └── permissions/ : specifies permissions for feeds
+        ...
 ```

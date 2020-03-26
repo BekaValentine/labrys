@@ -28,7 +28,7 @@ os.makedirs(os.path.join('data', 'authentication', 'auth_tokens'), exist_ok=True
 os.makedirs(os.path.join('data', 'identity'), exist_ok=True)
 os.makedirs(os.path.join('data', 'permissions'), exist_ok=True)
 os.makedirs(os.path.join('data', 'permissions', 'groups'), exist_ok=True)
-os.makedirs(os.path.join('data', 'permissions', 'restricted_user_content'), exist_ok=True)
+
 
 
 # blade_url
