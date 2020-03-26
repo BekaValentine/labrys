@@ -38,15 +38,10 @@ with open(os.path.join(DATA_DIR, 'blade_url.txt'), 'r') as f:
   BLADE_URL = f.read().strip()
 
 
-# Admin Servers
-with open(os.path.join(DATA_DIR, 'admins.txt'), 'r') as f:
-  ADMIN_SERVERS = f.read().split()
-
-
 # The Blade root. Doesn't do anything interesting right now.
 @app.route('/', methods = ['GET'])
 def labrys_home():
-  return render_template('main_page.html', admin_servers=ADMIN_SERVERS)
+  return render_template('main_page.html')
 
 
 

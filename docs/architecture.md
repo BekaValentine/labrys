@@ -69,7 +69,6 @@ LABRYS_ROOT/
     ├── src/ : additional python files
     ├── templates/ : html templates
     └── data/ : holds all of the backend data
-        ├── admins.txt : holds the list of blade public signing keys which can administer this blade
         ├── blade_url.txt : contains the canonical URL of this blade
         ├── session_secret_key.txt : holds the secret key to use for session management
         ├── authentication/ : holds data pertaining to authenticating the blade user

@@ -75,7 +75,7 @@ with open(os.path.join('data', 'authentication', 'password_hash.txt'), 'w') as f
   f.write(passwords.get_hashed_password(password).decode('ascii'))
 
 
-# signing keys -> admins
+# signing keys
 time.sleep(SLEEP_TIME)
 print()
 print()
@@ -89,10 +89,6 @@ with open(os.path.join('data', 'identity', 'private_signing_key.txt'), 'w') as f
 
 # safe the public signing key
 with open(os.path.join('data', 'identity', 'public_signing_key.txt'), 'w') as f:
-  f.write(public_signing_key)
-
-# add the public signing key to the list of admin blades
-with open(os.path.join('data', 'admins.txt'), 'w') as f:
   f.write(public_signing_key)
 
 
