@@ -7,7 +7,6 @@ import src.passwords as passwords
 import time
 
 
-
 SLEEP_TIME = 0.75
 
 time.sleep(SLEEP_TIME)
@@ -20,15 +19,15 @@ print('*                            *')
 print('******************************')
 
 
-
 os.makedirs('data', exist_ok=True)
 os.makedirs(os.path.join('data', 'authentication'), exist_ok=True)
-os.makedirs(os.path.join('data', 'authentication', 'auth_state'), exist_ok=True)
-os.makedirs(os.path.join('data', 'authentication', 'auth_tokens'), exist_ok=True)
+os.makedirs(os.path.join('data', 'authentication',
+                         'auth_state'), exist_ok=True)
+os.makedirs(os.path.join('data', 'authentication',
+                         'auth_tokens'), exist_ok=True)
 os.makedirs(os.path.join('data', 'identity'), exist_ok=True)
 os.makedirs(os.path.join('data', 'permissions'), exist_ok=True)
 os.makedirs(os.path.join('data', 'permissions', 'groups'), exist_ok=True)
-
 
 
 # blade_url
@@ -38,7 +37,7 @@ print()
 canonical_url = input('What is the canonical url to use for this blade?\n\n> ')
 
 with open(os.path.join('data', 'blade_url.txt'), 'w') as f:
-  f.write(canonical_url)
+    f.write(canonical_url)
 
 
 # display name
@@ -69,10 +68,11 @@ with open(os.path.join('data', 'identity', 'bio.txt'), 'w') as f:
 time.sleep(SLEEP_TIME)
 print()
 print()
-password = input('What password would you like to use to log in to this blade?\n\n> ')
+password = input(
+    'What password would you like to use to log in to this blade?\n\n> ')
 
 with open(os.path.join('data', 'authentication', 'password_hash.txt'), 'w') as f:
-  f.write(passwords.get_hashed_password(password).decode('ascii'))
+    f.write(passwords.get_hashed_password(password).decode('ascii'))
 
 
 # signing keys
@@ -81,17 +81,17 @@ print()
 print()
 print('Generating signing keys...')
 private_signing_key = nacl.signing.SigningKey.generate()
-public_signing_key = private_signing_key.verify_key.encode(encoder = nacl.encoding.Base64Encoder).decode('ascii')
+public_signing_key = private_signing_key.verify_key.encode(
+    encoder=nacl.encoding.Base64Encoder).decode('ascii')
 
 # save the private signing key
 with open(os.path.join('data', 'identity', 'private_signing_key.txt'), 'w') as f:
-  f.write(private_signing_key.encode(encoder = nacl.encoding.Base64Encoder).decode('ascii'))
+    f.write(private_signing_key.encode(
+        encoder=nacl.encoding.Base64Encoder).decode('ascii'))
 
 # safe the public signing key
 with open(os.path.join('data', 'identity', 'public_signing_key.txt'), 'w') as f:
-  f.write(public_signing_key)
-
-
+    f.write(public_signing_key)
 
 
 # session secret key
@@ -102,7 +102,7 @@ print('Generating session keys...')
 session_key = auth.get_random_bytes(32)
 
 with open(os.path.join('data', 'session_secret_key.txt'), 'w') as f:
-  f.write(base64.b64encode(session_key).decode('ascii'))
+    f.write(base64.b64encode(session_key).decode('ascii'))
 
 
 time.sleep(SLEEP_TIME)
