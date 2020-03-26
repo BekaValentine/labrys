@@ -81,15 +81,21 @@ print()
 print()
 print('Generating signing keys...')
 private_signing_key = nacl.signing.SigningKey.generate()
+public_signing_key = private_signing_key.verify_key.encode(encoder = nacl.encoding.Base64Encoder).decode('ascii')
 
+# save the private signing key
 with open(os.path.join('data', 'identity', 'private_signing_key.txt'), 'w') as f:
   f.write(private_signing_key.encode(encoder = nacl.encoding.Base64Encoder).decode('ascii'))
 
-with open(os.path.join('data', 'admins.txt'), 'w') as f:
-  f.write(private_signing_key.encode(encoder = nacl.encoding.Base64Encoder).decode('ascii'))
-
+# safe the public signing key
 with open(os.path.join('data', 'identity', 'public_signing_key.txt'), 'w') as f:
-  f.write(private_signing_key.verify_key.encode(encoder = nacl.encoding.Base64Encoder).decode('ascii'))
+  f.write(public_signing_key)
+
+# add the public signing key to the list of admin blades
+with open(os.path.join('data', 'admins.txt'), 'w') as f:
+  f.write(public_signing_key)
+
+
 
 
 # session secret key
