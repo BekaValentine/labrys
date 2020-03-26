@@ -6,19 +6,19 @@ This section lists the endpoints made available by a Labrys Blade. Each endpoint
 
 The `identity` endpoints provide all of the main info about a user, and allows identity provider operations to take place.
 
-### GET /identity
+### GET /identity : Identity
 
-Get the public bio of the person running the blade. This should include relevant link tags for the authentication process.
+Get the user identity of the person running the blade. This should include relevant info for the authentication process probably.
 
-### GET /identity/<path:filename>
+### GET /identity/<path:filename> : FileName -> FileContents
 
-Get the relevant file. This is used simply to get specific profile properties such as the display name or bio.
+Get the specified file. This is used simply to get specific profile properties such as the display name or bio.
 
-### GET /identity/deauthenticate
+### GET /identity/deauthenticate : ()
 
 Deautheticate the user from the blade by removing any set cookies.
 
-### GET /identity/authenticate
+### GET /identity/authenticate : Maybe (Requester, State, ReturnAddress) -> ()
 
 Params: optional(requester, state, return_address)
 
@@ -40,13 +40,13 @@ The `state` parameter is some random data supplied by the requester to ensure th
 
 The `return_address` parameter is used to keep track of the location that the user should eventually be directed to once the requester has received authentication of the user's identity.
 
-### POST /identity/authenticate
+### POST /identity/authenticate : Password -> ()
 
 Params: password
 
 Used to submit authenticating password to the blade as part of the auth process.
 
-### GET /identity/verify
+### GET /identity/verify : (AuthToken, Requester, State) -> ()
 
 Params: (auth_token, requester, state)
 
@@ -64,11 +64,11 @@ The `requester` parameter indicates the blade that wants the user to authenticat
 
 The `state` parameter is some random data supplied by the requester to ensure that meddler-in-the-middle attacks don't occur.
 
-### GET /identity/public_signing_key
+### GET /identity/public_signing_key : PublicKey
 
 Gets the public signing key for the blade. Use as part of the process of establishing the unique identity of the blade.
 
-### GET /identity/sign
+### GET /identity/sign : String -> String
 
 Params: message
 
@@ -78,15 +78,15 @@ Used to verify the identity of a blade. The message is signed with the private k
 
 The `inbox` endpoint acts similar to an ActivityPub inbox, in that it is both the place that an external user can send push content and also the place that the owner gets retrieve pushed content from.
 
-### GET /inbox
+### GET /inbox : List MessageSummary
 
 Returns a feed of summaries of all of the messages sent to the blade.
 
-### GET /inbox/<id>
+### GET /inbox/<id> : MessageID -> Message
 
 Returns the message with id `id`.
 
-### POST /inbox
+### POST /inbox : Message -> ()
 
 Adds a new message to the blade's inbox.
 
@@ -94,7 +94,7 @@ Adds a new message to the blade's inbox.
 
 The `outbox` endpoint acts similar to an ActivityPub outbox, in that it is both the place that an external user can pull content and also the place that the owner publish content to. This is also where the user puts messages to be pushed to other users.
 
-### GET /outbox
+### GET /outbox : (Maybe MessageID, Maybe Nat) -> List MessageSummary
 
 Params: optional(start_after), optional(count)
 
@@ -108,7 +108,7 @@ The id of the last message before the first message desired. That is to say, whe
 
 The number of messages to return, defaulting to 10. The messages returned after the next oldest messages after the start message.
 
-### POST /outbox
+### POST /outbox : Message -> ()
 
 Content: The message to publish.
 
@@ -118,15 +118,15 @@ If the message is a private message, it will be automatically forwarded to the r
 
 The `subscriptions` endpoint is like Twitter's `following` list, except that it's not public. It manages which other blades this blade is pulling feeds from.
 
-### GET /subscriptions
+### GET /subscriptions : List Subscription
 
 Returns the list of blade that this blade is subscribed to.
 
-### POST /subscriptions
+### POST /subscriptions : Subscription -> ()
 
 Adds a new blade to the subscriptions list.
 
-### DELETE /subscriptions/<id>
+### DELETE /subscriptions/<id> : SubscriptionID -> ()
 
 Removes the designated blade from the subscription list.
 
@@ -134,43 +134,43 @@ Removes the designated blade from the subscription list.
 
 The `permissions` endpoint is like Twitter's `followers` list, except that it's not public. It manages which other blades can pull what feeds from this blade.
 
-### GET /permissions/groups
+### GET /permissions/groups : List PermissionGroupSummary
 
 Returns the list of group summaries.
 
-### GET /permissions/groups/<id>
-
-Returns the info on the designed group.
-
-### PATCH /permissions/groups/<id>
-
-Updates the designated group.
-
-### DELETE /permissions/groups/<id>
-
-Deletes the designated group.
-
-### POST /permissions/groups
+### POST /permissions/groups : PermissionGroup -> ()
 
 Adds a new permissions group.
 
-### GET /permissions/blades
+### GET /permissions/groups/<id> : PermissionGroupID -> PermissionGroup
+
+Returns the info on the designed group.
+
+### PATCH /permissions/groups/<id> : (PermissionGroupID, PermissionGroup) -> ()
+
+Updates the designated group.
+
+### DELETE /permissions/groups/<id> : PermissionGroupID -> ()
+
+Deletes the designated group.
+
+### GET /permissions/blades : List PermissionBladeSummary
 
 Returns the list of blades with special permissions.
 
-### POST /permissions/blades
+### POST /permissions/blades : PermissionBlade -> ()
 
 Adds a permitted blade.
 
-### GET /permissions/blades/<id>
+### GET /permissions/blades/<id> : PermisionBladeID -> PermissionBlade
 
 Returns the permissions info for the designated blade.
 
-### PATCH /permissions/blades/<id>
+### PATCH /permissions/blades/<id> : (PermissionBladeID, PermissionBlade) -> ()
 
 Updates the designated blade permissions.
 
-### DELETE /permissions/blades/<id>
+### DELETE /permissions/blades/<id> : PermissionBladeID -> ()
 
 Removes the designated blade's permissions.
 
@@ -178,7 +178,7 @@ Removes the designated blade's permissions.
 
 The `timeline` endpoint acts as a way of retrieving the content of all the blade's subscriptions' outboxes. The blade will download all of the messages ahead of time and store them locally on it in the background.
 
-### GET /timeline
+### GET /timeline : (Maybe MessageID, Maybe Nat) -> List MessageSummary
 
 Params: optional(start_after), optional(count)
 
@@ -191,3 +191,117 @@ The id of the last message before the first message desired. That is to say, whe
 #### Count Param
 
 The number of messages to return, defaulting to 10. The messages returned after the next oldest messages after the start message.
+
+## /message_types
+
+The `message_types` endpoint is for managing the ontology that the blade makes use of. Message types can be added implicitly by using new ones in outgoing messages, as well as added explicitly via the endpoint.
+
+### GET /message_types : List MessageTypeSummary
+
+Returns a list of message type summaries.
+
+### POST /message_type : MessageType -> ()
+
+Adds a new message type.
+
+### GET /message_type/<id> : MessageTypeID -> MessageType
+
+Gets the designated message type.
+
+### PATCH /message_type/<id> : (MessageTypeId, MessageType) -> ()
+
+Updates the designated message type.
+
+# Types
+
+The following types are used in various places in the API.
+
+## Identity
+
+```
+{ display_name : String
+, bio : String
+}
+```
+
+## Message
+
+```
+{ id : MessageID
+, sender : BladeID
+, receiver : BladeID
+, type : MessageType
+, content : Content
+}
+```
+
+## MessageSummary
+
+```
+{ id : MessageID
+, sender : BladeID
+, receiver: BladeID
+, type : MessageType
+, contentSummary : ContentSummary
+}
+```
+
+## Subscription
+
+```
+{ id : SubscriptionID
+, blade : BladeID
+, identity : Identity
+}
+```
+
+## PermissionGroup
+
+```
+{ id : PermissionGroupID
+, name : String
+, description : String
+, members : List BladeID
+, permissions : List Permission
+}
+```
+
+## PermissionGroupSummary
+
+```
+{ id : PermissionGroupID
+, name : String
+, description : String
+, member_count : Nat
+}
+```
+
+## PermissionBlade
+
+```
+{ blade : Blade
+, permissions : List Permission
+}
+```
+
+## PermissionBladeSummary
+
+## MessageType
+
+```
+{ id : MessageTypeID
+, name : String
+, description : String
+, fields : List String
+, defining_url : Maybe URL
+}
+```
+
+## MessageTypeSummary
+
+```
+{ id : MessageTypeID
+, name : String
+, description : String
+}
+```
