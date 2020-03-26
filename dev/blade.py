@@ -82,7 +82,7 @@ def identity_file(filename):
 # log out of the blade.
 @app.route('/identity/deauthenticate', methods = ['GET'])
 def identity_deauthenticate():
-  session.pop('logged_in', None)
+  session.pop('authenticated', None)
   return redirect('/')
 
 # The identity/authenticate endpoint provides a means for the blade owner to
@@ -97,7 +97,7 @@ def identity_authenticate():
 
     if requester is None and state is None and return_address is None:
 
-        if 'logged_in' in session:
+        if 'authenticated' in session:
             return render_template('already_authenticated.html')
         else:
             return render_template('identity_authenticate.html')
@@ -106,7 +106,7 @@ def identity_authenticate():
         requester_no_slash = requester if requester[-1] != '/' else requester[:-1]
         redirect_url = requester_no_slash + '/login'
 
-        if 'logged_in' in session:
+        if 'authenticated' in session:
             auth_token = auth.make_auth_token(AUTH_TOKEN_DIR, requester, state)
             return redirect(redirect_url + '?auth_token=' + auth_token + '&state=' + state + '&return_address=' + return_address)
         else:
@@ -126,7 +126,7 @@ def identity_authenticate():
         password_hash = f.read().strip()
 
       if passwords.check_password(submitted_password, password_hash):
-        session['logged_in'] = 'logged_in'
+        session['authenticated'] = 'authenticated'
 
 
 
