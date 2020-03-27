@@ -46,17 +46,21 @@ Used to submit authenticating password to the blade as part of the auth process.
 
 The `inbox` endpoint acts similar to an ActivityPub inbox, in that it is both the place that an external user can send push content and also the place that the owner gets retrieve pushed content from.
 
-### GET /inbox : List MessageSummary
+### GET /inbox : List InboxMessage
 
-Returns a feed of summaries of all of the messages sent to the blade.
+Returns a list of all of the inbox messages sent to the blade.
 
-### GET /inbox/<id> : MessageID -> Message
+### POST /inbox : InboxMessage -> ()
 
-Returns the message with id `id`.
+Adds a new inbox message to the blade's inbox.
 
-### POST /inbox : Message -> ()
+### GET /inbox/<id> : InboxMessageID -> Message
 
-Adds a new message to the blade's inbox.
+Returns the inbox message with id `id`.
+
+### DELETE /inbox/<id> : InboxMessageID -> ()
+
+Deletes the designated inbox message.
 
 ## /outbox
 
@@ -189,6 +193,19 @@ The following types are used in various places in the API.
 ```
 { display_name : String
 , bio : String
+}
+```
+
+## InboxMessage
+
+The `id` field is only used in `GET` requests.
+
+```
+{ id : Maybe InboxMessageID
+, type : InboxMessageType
+, sender : BladeURL
+, witness : String
+, signed_witness : String
 }
 ```
 
