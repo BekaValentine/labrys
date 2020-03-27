@@ -20,11 +20,7 @@ print('******************************')
 
 
 os.makedirs('data', exist_ok=True)
-os.makedirs(os.path.join('data', 'authentication'), exist_ok=True)
-os.makedirs(os.path.join('data', 'authentication',
-                         'auth_state'), exist_ok=True)
-os.makedirs(os.path.join('data', 'authentication',
-                         'auth_tokens'), exist_ok=True)
+os.makedirs(os.path.join('data', 'secrets'), exist_ok=True)
 os.makedirs(os.path.join('data', 'identity'), exist_ok=True)
 os.makedirs(os.path.join('data', 'permissions'), exist_ok=True)
 os.makedirs(os.path.join('data', 'permissions', 'groups'), exist_ok=True)
@@ -71,7 +67,7 @@ print()
 password = input(
     'What password would you like to use to log in to this blade?\n\n> ')
 
-with open(os.path.join('data', 'authentication', 'password_hash.txt'), 'w') as f:
+with open(os.path.join('data', 'secrets', 'password_hash.txt'), 'w') as f:
     f.write(passwords.get_hashed_password(password).decode('ascii'))
 
 
@@ -85,7 +81,7 @@ public_signing_key = private_signing_key.verify_key.encode(
     encoder=nacl.encoding.Base64Encoder).decode('ascii')
 
 # save the private signing key
-with open(os.path.join('data', 'identity', 'private_signing_key.txt'), 'w') as f:
+with open(os.path.join('data', 'secrets', 'private_signing_key.txt'), 'w') as f:
     f.write(private_signing_key.encode(
         encoder=nacl.encoding.Base64Encoder).decode('ascii'))
 
@@ -101,7 +97,7 @@ print()
 print('Generating session keys...')
 session_key = auth.get_random_bytes(32)
 
-with open(os.path.join('data', 'session_secret_key.txt'), 'w') as f:
+with open(os.path.join('data', 'secrets', 'session_secret_key.txt'), 'w') as f:
     f.write(base64.b64encode(session_key).decode('ascii'))
 
 

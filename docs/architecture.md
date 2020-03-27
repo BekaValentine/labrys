@@ -4,9 +4,7 @@ Labrys consists of five main function components with a standard API, the Labrys
 
 - A webserver for hosting content
 
-- An IndieAuth identity server
-
-- A standardized minimal online identity (a profile or bio) that can be used to let others know who the owner of the Labrys blade is
+- A standardized minimal online identity (a profile or bio) that can be used to let others know who the owner of the Labrys blade is, together with means for establishing the identity of the blade across multiple interactions
 
 - A site-wide means of controlling who can view the content of the site (but not who can interact with the identity server nor the biographical information)
 
@@ -73,8 +71,6 @@ LABRYS_ROOT/
         ├── session_secret_key.txt : holds the secret key to use for session management
         ├── authentication/ : holds data pertaining to authenticating the blade user
         │   ├── password_hash.txt : bcrypt hash of the user's password + salt
-        │   ├── auth_state/ : auth states
-        │   └── auth_tokens/ : auth tokens
         │   ├── identity/ : holds the data pertaining to the Blade owner's public identity use for viewing followers etc.
         │   │   ├── avatar.{png,jpg,gif} : the Blade owner's avatar
         │   │   ├── bio.txt : the Blade owner's bio, short self description, etc.
