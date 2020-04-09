@@ -32,10 +32,6 @@ Used to verify the identity of a blade. The message is signed with the private k
 
 Deautheticate the user from the blade by removing any set cookies.
 
-### GET /identity/authenticate : ()
-
-Used to log the user in during the authentication process. All parameters are optional, but linked, i.e. either you make a request with no parameters or all of them.
-
 ### POST /identity/authenticate : Password -> ()
 
 Params: password
@@ -44,15 +40,15 @@ Used to submit authenticating password to the blade as part of the auth process.
 
 ## /inbox
 
-The `inbox` endpoint acts similar to an ActivityPub inbox, in that it is both the place that an external user can send push content and also the place that the owner gets retrieve pushed content from.
+The `inbox` endpoint is the place that an external user can send private message notifications to.
 
 ### GET /inbox : List InboxMessage
 
-Returns a list of all of the inbox messages sent to the blade.
+Returns a list of all of the private messages sent to the blade.
 
-### POST /inbox : InboxMessage -> ()
+### POST /inbox : BladeID -> ()
 
-Adds a new inbox message to the blade's inbox.
+Notifies the receiving blade that the blade with the given ID has new messages for it, which are then pulled from the sending blade.
 
 ### GET /inbox/<id> : InboxMessageID -> Message
 
@@ -64,27 +60,49 @@ Deletes the designated inbox message.
 
 ## /outbox
 
-The `outbox` endpoint acts similar to an ActivityPub outbox, in that it is both the place that an external user can pull content and also the place that the owner publish content to. This is also where the user puts messages to be pushed to other users.
+The `outbox` endpoint acts as the place that the owner publishes messages to send to other blades' inboxes.
 
-### GET /outbox : (Maybe MessageID, Maybe Nat) -> List MessageSummary
+### GET /outbox : List OutboxMessage
 
-Params: optional(start_after), optional(count)
+Gets all the messages currently in the outbox. If the user is the blade owner, it'll show all of the messages. If the user is not the blade owner, then it will show all the messages for the requesting blade.
 
-Returns the feed for the blade.
+### POST /outbox : OutboxMessage -> ()
 
-#### Start After Param
+Sends the message.
 
-The id of the last message before the first message desired. That is to say, when arranged in order of publish datetime, the first message to be returned should be the message just before the designated message. When not provided, it's assumed that the user agent is requesting the most recent messages.
+Content: The message to send.
 
-#### Count Param
+### DELETE /outbox/<id> : OutboxMessageID -> ()
 
-The number of messages to return, defaulting to 10. The messages returned after the next oldest messages after the start message.
+Deletes the specified message.
 
-### POST /outbox : Message -> ()
+## /feed
+
+The feed is the list of broadcast-style messages.
+
+### GET /feed : (Maybe FeedMessageID) -> List FeedMessage
+
+Params: optional(last_seen)
+
+Returns the feed for the blade. If the `last_seen` query param is specified, only the messages with a later publish date will be returned.
+
+#### Last Seen Param
+
+The id of the most recent message that the requesting blade has seen.
+
+### POST /feed : FeedMessage -> ()
+
+Publishes a message.
 
 Content: The message to publish.
 
-If the message is a private message, it will be automatically forwarded to the recipient's inbox.
+### GET /feed/<id> : FeedMessage
+
+Gets a feed message.
+
+### DELETE /feed/<id> : FeedMessageID -> ()
+
+Deletes the message with the specified id.
 
 ## /subscriptions
 
@@ -106,43 +124,43 @@ Removes the designated blade from the subscription list.
 
 The `permissions` endpoint is like Twitter's `followers` list, except that it's not public. It manages which other blades can pull what feeds from this blade.
 
-### GET /permissions/groups : List PermissionGroupSummary
+### GET /permissions/groups : List PermissionsGroupSummary
 
 Returns the list of group summaries.
 
-### POST /permissions/groups : PermissionGroup -> ()
+### POST /permissions/groups : PermissionsGroup -> ()
 
 Adds a new permissions group.
 
-### GET /permissions/groups/<id> : PermissionGroupID -> PermissionGroup
+### GET /permissions/groups/<id> : PermissionsGroupID -> PermissionsGroup
 
 Returns the info on the designed group.
 
-### PATCH /permissions/groups/<id> : (PermissionGroupID, PermissionGroup) -> ()
+### PUT /permissions/groups/<id> : (PermissionsGroupID, PermissionsGroup) -> ()
 
 Updates the designated group.
 
-### DELETE /permissions/groups/<id> : PermissionGroupID -> ()
+### DELETE /permissions/groups/<id> : PermissionsGroupID -> ()
 
 Deletes the designated group.
 
-### GET /permissions/blades : List PermissionBladeSummary
+### GET /permissions/blades : List PermissionsBladeSummary
 
 Returns the list of blades with special permissions.
 
-### POST /permissions/blades : PermissionBlade -> ()
+### POST /permissions/blades : PermissionsBlade -> ()
 
 Adds a permitted blade.
 
-### GET /permissions/blades/<id> : PermisionBladeID -> PermissionBlade
+### GET /permissions/blades/<id> : PermisionBladeID -> PermissionsBlade
 
 Returns the permissions info for the designated blade.
 
-### PATCH /permissions/blades/<id> : (PermissionBladeID, PermissionBlade) -> ()
+### PUT /permissions/blades/<id> : (PermissionsBladeID, PermissionsBlade) -> ()
 
 Updates the designated blade permissions.
 
-### DELETE /permissions/blades/<id> : PermissionBladeID -> ()
+### DELETE /permissions/blades/<id> : PermissionsBladeID -> ()
 
 Removes the designated blade's permissions.
 
@@ -150,39 +168,9 @@ Removes the designated blade's permissions.
 
 The `timeline` endpoint acts as a way of retrieving the content of all the blade's subscriptions' outboxes. The blade will download all of the messages ahead of time and store them locally on it in the background.
 
-### GET /timeline : (Maybe MessageID, Maybe Nat) -> List MessageSummary
+### GET /timeline : List TimelineMessage
 
-Params: optional(start_after), optional(count)
-
-Returns the outbox messages for all of the blade's subscriptions.
-
-#### Start After Param
-
-The id of the last message before the first message desired. That is to say, when arranged in order of publish datetime, the first message to be returned should be the message just before the designated message. When not provided, it's assumed that the user agent is requesting the most recent messages.
-
-#### Count Param
-
-The number of messages to return, defaulting to 10. The messages returned after the next oldest messages after the start message.
-
-## /message_types
-
-The `message_types` endpoint is for managing the ontology that the blade makes use of. Message types can be added implicitly by using new ones in outgoing messages, as well as added explicitly via the endpoint.
-
-### GET /message_types : List MessageTypeSummary
-
-Returns a list of message type summaries.
-
-### POST /message_type : MessageType -> ()
-
-Adds a new message type.
-
-### GET /message_type/<id> : MessageTypeID -> MessageType
-
-Gets the designated message type.
-
-### PATCH /message_type/<id> : (MessageTypeId, MessageType) -> ()
-
-Updates the designated message type.
+Updates the timeline cache and returns the new timeline messages since the last update.
 
 # Types
 
@@ -198,52 +186,73 @@ The following types are used in various places in the API.
 
 ## InboxMessage
 
-The `id` field is only used in `GET` requests.
-
 ```
-{ id : Maybe InboxMessageID
-, type : InboxMessageType
+{ id : InboxMessageID
+, origin_id : Maybe InboxMessageID
 , sender : BladeURL
-, witness : String
-, signed_witness : String
+, sent_datetime : DateTime
+, type : String
+, content : String
 }
 ```
 
-## Message
+## OutboxMessage
+
+The `id` and `publish_datetime` fields are only used in `GET` requests.
 
 ```
 { id : MessageID
-, sender : BladeID
+, sent_datetime : DateTime
 , receiver : BladeID
-, type : MessageType
+, type : PrivateMessageType
 , content : Content
 }
 ```
 
-## MessageSummary
+## FeedOptions
 
 ```
-{ id : MessageID
-, sender : BladeID
-, receiver: BladeID
-, type : MessageType
-, contentSummary : ContentSummary
+{ last_seen : Maybe FeedMessageID
 }
+```
+
+## FeedMessage
+
+The `id` and `publish_datetime` fields are only used in `GET` requests.
+
+```
+{ id : FeedMessageID
+, publish_datetime : DateTime
+, type : FeedMessageType
+, content : Content
+, permissions_categories : [String]
+}
+```
+
+## SubscriptionID
+
+```
+UrlSafeBase64EncodedPublicSigningKey
 ```
 
 ## Subscription
 
+The `id`, `public_signing_key`, and `last_seen` fields are only used for get requests.
+
 ```
 { id : SubscriptionID
-, blade : BladeID
-, identity : Identity
+, url : URL
+, public_signing_key : PublicSigningKey
+, last_seen : Maybe FeedMessageID
 }
 ```
 
-## PermissionGroup
+## PermissionsGroup
+
+The `id` field is only used for get requests.
 
 ```
-{ id : PermissionGroupID
+{ id : PermissionsGroupID
 , name : String
 , description : String
 , members : List BladeID
@@ -251,42 +260,48 @@ The `id` field is only used in `GET` requests.
 }
 ```
 
-## PermissionGroupSummary
+## PermissionsGroupSummary
 
 ```
-{ id : PermissionGroupID
+{ id : PermissionsGroupID
 , name : String
 , description : String
 , member_count : Nat
 }
 ```
 
-## PermissionBlade
+## PermissionsBladeID
 
 ```
-{ blade : Blade
-, permissions : List Permission
+UrlSafeBase65EncodedPublicSigningKey
+```
+
+## PermissionsBlade
+
+```
+List Permission
+```
+
+## PermissionsBladeSummary
+
+```
+{ id : PermissionsBladeID
+, public_signing_key : PublicSigningKey
+, permissions : PermissionsBlade
 }
 ```
 
-## PermissionBladeSummary
-
-## MessageType
+## TimelineMessage
 
 ```
-{ id : MessageTypeID
-, name : String
-, description : String
-, fields : List String
-, defining_url : Maybe URL
-}
-```
-
-## MessageTypeSummary
-
-```
-{ id : MessageTypeID
-, name : String
-, description : String
+{ id : TimelineMessageID
+, retrieve_datetime : DateTime
+, url : URL
+, origin_id : FeedMessageID
+, public_signing_key : PublicSigningKey
+, origin_id : FeedMessageID
+, publish_datetime : DateTime
+, type : FeedMessageType
+, content : Content
 }
 ```

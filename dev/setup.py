@@ -23,7 +23,7 @@ os.makedirs('data', exist_ok=True)
 os.makedirs(os.path.join('data', 'secrets'), exist_ok=True)
 os.makedirs(os.path.join('data', 'identity'), exist_ok=True)
 os.makedirs(os.path.join('data', 'permissions'), exist_ok=True)
-os.makedirs(os.path.join('data', 'permissions', 'groups'), exist_ok=True)
+os.makedirs(os.path.join('data', 'known_blades_avatars'), exist_ok=True)
 
 
 # blade_url
