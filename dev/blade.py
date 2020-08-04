@@ -131,7 +131,6 @@ def identity_deauthenticate():
 @app.route('/identity/authenticate', methods=['POST'])
 @request_body(Password)
 def identity_authenticate_post(submitted_password):
-    print(submitted_password)
     with open(PASSWORD_HASH_FILE, 'r') as f:
         password_hash = f.read().strip()
 
