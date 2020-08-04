@@ -139,7 +139,7 @@ def identity_authenticate_post(submitted_password):
 
     session['authenticated'] = 'authenticated'
 
-    return redirect('#')
+    return redirect('/')
 
 
 # The /inbox endpoint is where incoming private message notifications go.
