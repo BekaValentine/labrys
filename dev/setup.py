@@ -95,7 +95,9 @@ time.sleep(SLEEP_TIME)
 print()
 print()
 print('Generating session keys...')
-session_key = auth.get_random_bytes(32)
+
+with open('/dev/urandom', 'rb') as f:
+    session_key = f.read(32)
 
 with open(os.path.join('data', 'secrets', 'session_secret_key.txt'), 'w') as f:
     f.write(base64.b64encode(session_key).decode('ascii'))
