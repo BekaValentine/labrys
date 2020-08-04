@@ -123,7 +123,7 @@ def identity_sign(message):
 @app.route('/identity/deauthenticate', methods=['GET'])
 def identity_deauthenticate():
     session.pop('authenticated', None)
-    return redirect('/')
+    return 'ok'
 
 
 # The identity/authenticate endpoint provides a means for the blade owner to
@@ -139,7 +139,7 @@ def identity_authenticate_post(submitted_password):
 
     session['authenticated'] = 'authenticated'
 
-    return redirect('/')
+    return 'ok'
 
 
 # The /inbox endpoint is where incoming private message notifications go.
