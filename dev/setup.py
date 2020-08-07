@@ -1,113 +1,135 @@
+import argparse
 import base64
 import bcrypt
 import nacl.signing
 import os
-import src.auth as auth
 import src.passwords as passwords
+import sys
 import time
 
 
-SLEEP_TIME = 0.75
+def noninteractive(canonical_url, display_name, bio, password):
+    os.makedirs('data', exist_ok=True)
+    os.makedirs(os.path.join('data', 'secrets'), exist_ok=True)
+    os.makedirs(os.path.join('data', 'identity'), exist_ok=True)
+    os.makedirs(os.path.join('data', 'permissions'), exist_ok=True)
+    os.makedirs(os.path.join('data', 'known_blades_avatars'), exist_ok=True)
 
-time.sleep(SLEEP_TIME)
+    with open(os.path.join('data', 'blade_url.txt'), 'w') as f:
+        f.write(canonical_url)
 
-print()
-print('******************************')
-print('*                            *')
-print('*   Labrys Setup Assistant   *')
-print('*                            *')
-print('******************************')
+    with open(os.path.join('data', 'identity', 'display_name.txt'), 'w') as f:
+        f.write(display_name)
 
+    with open(os.path.join('data', 'identity', 'bio.txt'), 'w') as f:
+        f.write(bio)
 
-os.makedirs('data', exist_ok=True)
-os.makedirs(os.path.join('data', 'secrets'), exist_ok=True)
-os.makedirs(os.path.join('data', 'identity'), exist_ok=True)
-os.makedirs(os.path.join('data', 'permissions'), exist_ok=True)
-os.makedirs(os.path.join('data', 'known_blades_avatars'), exist_ok=True)
+    with open(os.path.join('data', 'secrets', 'password_hash.txt'), 'w') as f:
+        f.write(passwords.get_hashed_password(password).decode('ascii'))
 
+    # generate signing keys
+    private_signing_key = nacl.signing.SigningKey.generate()
+    public_signing_key = private_signing_key.verify_key.encode(
+        encoder=nacl.encoding.Base64Encoder).decode('ascii')
 
-# blade_url
-time.sleep(SLEEP_TIME)
-print()
-print()
-canonical_url = input('What is the canonical url to use for this blade?\n\n> ')
+    # save the private signing key
+    with open(os.path.join('data', 'secrets', 'private_signing_key.txt'), 'w') as f:
+        f.write(private_signing_key.encode(
+            encoder=nacl.encoding.Base64Encoder).decode('ascii'))
 
-with open(os.path.join('data', 'blade_url.txt'), 'w') as f:
-    f.write(canonical_url)
+    # save the public signing key
+    with open(os.path.join('data', 'identity', 'public_signing_key.txt'), 'w') as f:
+        f.write(public_signing_key)
 
+    # session key
+    with open('/dev/urandom', 'rb') as f:
+        session_key = f.read(32)
 
-# display name
-time.sleep(SLEEP_TIME)
-print()
-print()
-display_name = input('What display name should this blade use for you?\n\n> ')
-if '' == display_name:
-    display_name = 'AnonymousUser'
-
-with open(os.path.join('data', 'identity', 'display_name.txt'), 'w') as f:
-    f.write(display_name)
-
-
-# bio
-time.sleep(SLEEP_TIME)
-print()
-print()
-bio = input('What bio text should this blade use for you?\n\n> ')
-if '' == bio:
-    bio = 'No bio.'
-
-with open(os.path.join('data', 'identity', 'bio.txt'), 'w') as f:
-    f.write(bio)
+    with open(os.path.join('data', 'secrets', 'session_secret_key.txt'), 'w') as f:
+        f.write(base64.b64encode(session_key).decode('ascii'))
 
 
-# password_hash
-time.sleep(SLEEP_TIME)
-print()
-print()
-password = input(
-    'What password would you like to use to log in to this blade?\n\n> ')
+def interactive():
 
-with open(os.path.join('data', 'secrets', 'password_hash.txt'), 'w') as f:
-    f.write(passwords.get_hashed_password(password).decode('ascii'))
+    SLEEP_TIME = 0.75
+
+    time.sleep(SLEEP_TIME)
+
+    print()
+    print('******************************')
+    print('*                            *')
+    print('*   Labrys Setup Assistant   *')
+    print('*                            *')
+    print('******************************')
+
+    # blade_url
+    time.sleep(SLEEP_TIME)
+    print()
+    print()
+    canonical_url = input(
+        'What is the canonical url to use for this blade?\n\n> ')
+
+    # display name
+    time.sleep(SLEEP_TIME)
+    print()
+    print()
+    display_name = input(
+        'What display name should this blade use for you?\n\n> ')
+    if '' == display_name:
+        display_name = 'AnonymousUser'
+
+    # bio
+    time.sleep(SLEEP_TIME)
+    print()
+    print()
+    bio = input('What bio text should this blade use for you?\n\n> ')
+    if '' == bio:
+        bio = 'No bio.'
+
+    # password_hash
+    time.sleep(SLEEP_TIME)
+    print()
+    print()
+    password = input(
+        'What password would you like to use to log in to this blade?\n\n> ')
+
+    # signing keys
+    time.sleep(SLEEP_TIME)
+    print()
+    print()
+    print('Generating signing keys...')
+
+    # session secret key
+    time.sleep(SLEEP_TIME)
+    print()
+    print()
+    print('Generating session keys...')
+
+    noninteractive(canonical_url, display_name, bio, password)
+
+    time.sleep(SLEEP_TIME)
+    print()
+    print()
+    print('Setup complete.')
+    print()
+    print()
+
+    time.sleep(SLEEP_TIME)
 
 
-# signing keys
-time.sleep(SLEEP_TIME)
-print()
-print()
-print('Generating signing keys...')
-private_signing_key = nacl.signing.SigningKey.generate()
-public_signing_key = private_signing_key.verify_key.encode(
-    encoder=nacl.encoding.Base64Encoder).decode('ascii')
-
-# save the private signing key
-with open(os.path.join('data', 'secrets', 'private_signing_key.txt'), 'w') as f:
-    f.write(private_signing_key.encode(
-        encoder=nacl.encoding.Base64Encoder).decode('ascii'))
-
-# safe the public signing key
-with open(os.path.join('data', 'identity', 'public_signing_key.txt'), 'w') as f:
-    f.write(public_signing_key)
-
-
-# session secret key
-time.sleep(SLEEP_TIME)
-print()
-print()
-print('Generating session keys...')
-
-with open('/dev/urandom', 'rb') as f:
-    session_key = f.read(32)
-
-with open(os.path.join('data', 'secrets', 'session_secret_key.txt'), 'w') as f:
-    f.write(base64.b64encode(session_key).decode('ascii'))
-
-
-time.sleep(SLEEP_TIME)
-print()
-print()
-print('Setup complete.')
-print()
-print()
-
-time.sleep(SLEEP_TIME)
+if len(sys.argv) == 1:
+    interactive()
+else:
+    parser = argparse.ArgumentParser(
+        description='A setup utility for labrys blades. Run this program without arguments for interactive mode.')
+    parser.add_argument('<canonical-url>',
+                        help='The canonical URL used to access this blade.')
+    parser.add_argument(
+        '<display-name>', help='The name to show other people who view your blade info.')
+    parser.add_argument(
+        '<bio>', help='A short description of who you are to help other people get to know you.')
+    parser.add_argument(
+        '<password>', help='The password you will use to log into this blade.')
+    args = vars(parser.parse_args())
+    noninteractive(args['<canonical-url>'],
+                   args['<display-name>'], args['<bio>'], args['<password>'])
