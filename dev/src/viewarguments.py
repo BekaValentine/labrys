@@ -201,7 +201,8 @@ class FeedMessage:
         except:
             return None
 
-        message_type = {'type': String, 'content': String}
+        message_type = {'type': String, 'content': String,
+                        'permissions_categories': [String]}
 
         if not check(message, message_type):
             return None
