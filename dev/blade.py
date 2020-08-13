@@ -26,7 +26,10 @@ from src.viewarguments import *
 
 app = Flask(__name__)
 
-DATA_DIR = os.path.join(app.root_path, 'data')
+DATA_DIR = os.environ['DATA_DIR']
+if not DATA_DIR:
+    print('Data directory is needed.')
+    exit()
 
 SECRETS_DIR = os.path.join(DATA_DIR, 'secrets')
 SESSION_SECRET_KEY_FILE = os.path.join(SECRETS_DIR, 'session_secret_key.txt')
