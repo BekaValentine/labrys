@@ -2,85 +2,85 @@
 
 This section lists the endpoints made available by a Labrys Blade. Each endpoint is listed together with a description of what the endpoint is for, all of the verbs that are available for that endpoint, and a description of the behavior provided by that verb.
 
-## /identity
+## /api/identity
 
 The `identity` endpoints provide all of the main info about a user, and allows identity provider operations to take place.
 
-### GET /identity/avatar : Image
+### GET /api/identity/avatar : Image
 
 Get the blade's avatar, if it exists.
 
-### GET /identity/display_name : String
+### GET /api/identity/display_name : String
 
 Get the blade's display name.
 
-### GET /identity/bio : String
+### GET /api/identity/bio : String
 
 Get the blade's bio.
 
-### GET /identity/public_signing_key : PublicKey
+### GET /api/identity/public_signing_key : PublicKey
 
 Gets the public signing key for the blade. Use as part of the process of establishing the unique identity of the blade.
 
-### GET /identity/sign : String -> String
+### GET /api/identity/sign : String -> String
 
 Params: message
 
 Used to verify the identity of a blade. The message is signed with the private key corresponding to the public signing key at `/identity/public_signing_key` and then returned to the user.
 
-### GET /identity/deauthenticate : ()
+### GET /api/identity/deauthenticate : ()
 
 Deautheticate the user from the blade by removing any set cookies.
 
-### POST /identity/authenticate : Password -> ()
+### POST /api/identity/authenticate : Password -> ()
 
 Params: password
 
 Used to submit authenticating password to the blade as part of the auth process.
 
-## /inbox
+## /api/inbox
 
 The `inbox` endpoint is the place that an external user can send private message notifications to.
 
-### GET /inbox : List InboxMessage
+### GET /api/inbox : List InboxMessage
 
 Returns a list of all of the private messages sent to the blade.
 
-### POST /inbox : BladeID -> ()
+### POST /api/inbox : BladeID -> ()
 
 Notifies the receiving blade that the blade with the given ID has new messages for it, which are then pulled from the sending blade.
 
-### GET /inbox/<id> : InboxMessageID -> Message
+### GET /api/inbox/<id> : InboxMessageID -> Message
 
 Returns the inbox message with id `id`.
 
-### DELETE /inbox/<id> : InboxMessageID -> ()
+### DELETE /api/inbox/<id> : InboxMessageID -> ()
 
 Deletes the designated inbox message.
 
-## /outbox
+## /api/outbox
 
 The `outbox` endpoint acts as the place that the owner publishes messages to send to other blades' inboxes.
 
-### GET /outbox : List OutboxMessage
+### GET /api/outbox : List OutboxMessage
 
 Gets all the messages currently in the outbox. If the user is the blade owner, it'll show all of the messages. If the user is not the blade owner, then it will show all the messages for the requesting blade.
 
-### POST /outbox : OutboxMessage -> ()
+### POST /api/outbox : OutboxMessage -> ()
 
 Sends the message.
 
 Content: The message to send.
 
-### DELETE /outbox/<id> : OutboxMessageID -> ()
+### DELETE /api/outbox/<id> : OutboxMessageID -> ()
 
 Deletes the specified message.
 
-## /feed
+## /api/feed
 
 The feed is the list of broadcast-style messages.
 
-### GET /feed : (Maybe FeedMessageID) -> List FeedMessage
+### GET /api/feed : (Maybe FeedMessageID) -> List FeedMessage
 
 Params: optional(last_seen)
 
@@ -90,85 +90,85 @@ Returns the feed for the blade. If the `last_seen` query param is specified, onl
 
 The id of the most recent message that the requesting blade has seen.
 
-### POST /feed : FeedMessage -> ()
+### POST /api/feed : FeedMessage -> ()
 
 Publishes a message.
 
 Content: The message to publish.
 
-### GET /feed/<id> : FeedMessage
+### GET /api/feed/<id> : FeedMessage
 
 Gets a feed message.
 
-### DELETE /feed/<id> : FeedMessageID -> ()
+### DELETE /api/feed/<id> : FeedMessageID -> ()
 
 Deletes the message with the specified id.
 
-## /subscriptions
+## /api/subscriptions
 
 The `subscriptions` endpoint is like Twitter's `following` list, except that it's not public. It manages which other blades this blade is pulling feeds from.
 
-### GET /subscriptions : List Subscription
+### GET /api/subscriptions : List Subscription
 
 Returns the list of blade that this blade is subscribed to.
 
-### POST /subscriptions : Subscription -> ()
+### POST /api/subscriptions : Subscription -> ()
 
 Adds a new blade to the subscriptions list.
 
-### DELETE /subscriptions/<id> : SubscriptionID -> ()
+### DELETE /api/subscriptions/<id> : SubscriptionID -> ()
 
 Removes the designated blade from the subscription list.
 
-## /permissions
+## /api/permissions
 
 The `permissions` endpoint is like Twitter's `followers` list, except that it's not public. It manages which other blades can pull what feeds from this blade.
 
-### GET /permissions/groups : List PermissionsGroupSummary
+### GET /api/permissions/groups : List PermissionsGroupSummary
 
 Returns the list of group summaries.
 
-### POST /permissions/groups : PermissionsGroup -> ()
+### POST /api/permissions/groups : PermissionsGroup -> ()
 
 Adds a new permissions group.
 
-### GET /permissions/groups/<id> : PermissionsGroupID -> PermissionsGroup
+### GET /api/permissions/groups/<id> : PermissionsGroupID -> PermissionsGroup
 
 Returns the info on the designed group.
 
-### PUT /permissions/groups/<id> : (PermissionsGroupID, PermissionsGroup) -> ()
+### PUT /api/permissions/groups/<id> : (PermissionsGroupID, PermissionsGroup) -> ()
 
 Updates the designated group.
 
-### DELETE /permissions/groups/<id> : PermissionsGroupID -> ()
+### DELETE /api/permissions/groups/<id> : PermissionsGroupID -> ()
 
 Deletes the designated group.
 
-### GET /permissions/blades : List PermissionsBladeSummary
+### GET /api/permissions/blades : List PermissionsBladeSummary
 
 Returns the list of blades with special permissions.
 
-### POST /permissions/blades : PermissionsBlade -> ()
+### POST /api/permissions/blades : PermissionsBlade -> ()
 
 Adds a permitted blade.
 
-### GET /permissions/blades/<id> : PermisionBladeID -> PermissionsBlade
+### GET /api/permissions/blades/<id> : PermisionBladeID -> PermissionsBlade
 
 Returns the permissions info for the designated blade.
 
-### PUT /permissions/blades/<id> : (PermissionsBladeID, PermissionsBlade) -> ()
+### PUT /api/permissions/blades/<id> : (PermissionsBladeID, PermissionsBlade) -> ()
 
 Updates the designated blade permissions.
 
-### DELETE /permissions/blades/<id> : PermissionsBladeID -> ()
+### DELETE /api/permissions/blades/<id> : PermissionsBladeID -> ()
 
 Removes the designated blade's permissions.
 
-## /timeline
+## /api/timeline
 
 The `timeline` endpoint acts as a way of retrieving the content of all the blade's subscriptions' outboxes. The blade will download all of the messages ahead of time and store them locally on it in the background.
 
-### GET /timeline : List TimelineMessage
+### GET /api/timeline : List TimelineMessage
 
 Updates the timeline cache and returns the new timeline messages since the last update.
 

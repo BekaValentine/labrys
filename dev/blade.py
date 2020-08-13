@@ -77,7 +77,7 @@ def labrys_home():
 
 # The identity/<file> endpoint serves the content of the identity directory,
 # which is usually the display name, bio, and avatar.
-@app.route('/identity/avatar', methods=['GET'])
+@app.route('/api/identity/avatar', methods=['GET'])
 def identity_avatar():
     avatar_candidates =\
         [f for f in os.listdir(IDENTITY_DIR)
@@ -90,28 +90,28 @@ def identity_avatar():
 
 
 # Gets the display name
-@app.route('/identity/display_name', methods=['GET'])
+@app.route('/api/identity/display_name', methods=['GET'])
 def identity_display_name():
     with open(DISPLAY_NAME_FILE, 'r') as f:
         return f.read()
 
 
 # Gets the bio
-@app.route('/identity/bio', methods=['GET'])
+@app.route('/api/identity/bio', methods=['GET'])
 def identity_bio():
     with open(BIO_FILE, 'r') as f:
         return f.read()
 
 
 # Gets the public signing key
-@app.route('/identity/public_signing_key', methods=['GET'])
+@app.route('/api/identity/public_signing_key', methods=['GET'])
 def identity_public_signing_key():
     with open(PUBLIC_SIGNING_KEY_FILE, 'r') as f:
         return f.read().strip()
 
 
 # The identity/sign endpoint is used to get a signed value from the blade.
-@app.route('/identity/sign', methods=['GET'])
+@app.route('/api/identity/sign', methods=['GET'])
 @query_params(SignMessage)
 def identity_sign(message):
     with open(PRIVATE_SIGNING_KEY_FILE, 'r') as f:
@@ -123,7 +123,7 @@ def identity_sign(message):
 
 # The identity/deauthenticate endpoint provides a means for the blade owner to
 # log out of the blade.
-@app.route('/identity/deauthenticate', methods=['GET'])
+@app.route('/api/identity/deauthenticate', methods=['GET'])
 def identity_deauthenticate():
     session.pop('authenticated', None)
     return 'ok'
@@ -131,7 +131,7 @@ def identity_deauthenticate():
 
 # The identity/authenticate endpoint provides a means for the blade owner to
 # identify themselves to the blade.
-@app.route('/identity/authenticate', methods=['POST'])
+@app.route('/api/identity/authenticate', methods=['POST'])
 @request_body(Password)
 def identity_authenticate_post(submitted_password):
     with open(PASSWORD_HASH_FILE, 'r') as f:
@@ -145,14 +145,14 @@ def identity_authenticate_post(submitted_password):
     return 'ok'
 
 
-# The /inbox endpoint is where incoming private message notifications go.
-@app.route('/inbox', methods=['GET'])
+# The /api/inbox endpoint is where incoming private message notifications go.
+@app.route('/api/inbox', methods=['GET'])
 @require_authentication
 def inbox_get():
     return json.dumps(INBOX_DB.all()), 200
 
 
-@app.route('/inbox', methods=['POST'])
+@app.route('/api/inbox', methods=['POST'])
 @request_body(InboxMessage)
 def inbox_post(sender_info):
 
@@ -161,7 +161,7 @@ def inbox_post(sender_info):
         PUBLIC_SIGNING_KEY_FILE,
         sender_info['public_signing_key'],
         requests.get,
-        sender_info['url'] + '/outbox')
+        sender_info['url'] + '/api/outbox')
 
     if resp_data:
         received_messages = json.loads(resp_data)
@@ -181,7 +181,7 @@ def inbox_post(sender_info):
     return 'ok', 200
 
 
-@app.route('/inbox/<message_id>', methods=['DELETE'])
+@app.route('/api/inbox/<message_id>', methods=['DELETE'])
 @require_authentication
 def inbox_delete(message_id):
 
@@ -190,8 +190,8 @@ def inbox_delete(message_id):
     return 'ok', 200
 
 
-# The /outbox endpoint is where incoming private message notifications go.
-@app.route('/outbox', methods=['GET'])
+# The /api/outbox endpoint is where incoming private message notifications go.
+@app.route('/api/outbox', methods=['GET'])
 @many_header_params(BladeAuthorization)
 def outbox_get(authorization):
 
@@ -213,7 +213,7 @@ def outbox_get(authorization):
     return json.dumps(encrypted_messages), 200
 
 
-@app.route('/outbox', methods=['POST'])
+@app.route('/api/outbox', methods=['POST'])
 @require_authentication
 @request_body(OutboxMessage)
 def outbox_post(message):
@@ -228,7 +228,7 @@ def outbox_post(message):
     with open(PUBLIC_SIGNING_KEY_FILE, 'r') as f:
         public_signing_key = f.read().strip()
 
-    resp = requests.post(message['receiver_url'] + '/inbox',
+    resp = requests.post(message['receiver_url'] + '/api/inbox',
                          data=json.dumps({
                              'url': BLADE_URL,
                              'public_signing_key': public_signing_key
@@ -237,7 +237,7 @@ def outbox_post(message):
     return 'ok', 200
 
 
-@app.route('/outbox/<message_id>', methods=['DELETE'])
+@app.route('/api/outbox/<message_id>', methods=['DELETE'])
 @require_authentication
 def outbox_delete(message_id):
 
@@ -246,8 +246,8 @@ def outbox_delete(message_id):
     return 'ok', 200
 
 
-# The /feed endpoint provides the public broadcast messages from this blade.
-@app.route('/feed', methods=['GET'])
+# The /api/feed endpoint provides the public broadcast messages from this blade.
+@app.route('/api/feed', methods=['GET'])
 @many_query_params(FeedOptions)
 @many_header_params(BladeAuthorization)
 def feed_get(authorization, last_seen):
@@ -288,7 +288,7 @@ def feed_get(authorization, last_seen):
         return json.dumps({'messages': messages}), 200
 
 
-@app.route('/feed', methods=['POST'])
+@app.route('/api/feed', methods=['POST'])
 @require_authentication
 @request_body(FeedMessage)
 def feed_post(message):
@@ -298,10 +298,10 @@ def feed_post(message):
 
     FEED_DB.insert(message)
 
-    return 'ok', 200
+    return message['id'], 200
 
 
-@app.route('/feed/<message_id>', methods=['DELETE'])
+@app.route('/api/feed/<message_id>', methods=['DELETE'])
 @require_authentication
 def feed_id_delete(message_id):
     FEED_DB.remove(Query().id == message_id)
@@ -309,7 +309,7 @@ def feed_id_delete(message_id):
     return 'ok', 200
 
 
-@app.route('/subscriptions', methods=['GET'])
+@app.route('/api/subscriptions', methods=['GET'])
 @require_authentication
 def subscriptions_get():
 
@@ -325,7 +325,7 @@ def subscriptions_get():
     return json.dumps(subs)
 
 
-@app.route('/subscriptions', methods=['POST'])
+@app.route('/api/subscriptions', methods=['POST'])
 @require_authentication
 @request_body(Subscription)
 def subscriptions_post(blade_url):
@@ -345,7 +345,7 @@ def subscriptions_post(blade_url):
     return 'ok', 200
 
 
-@app.route('/subscriptions/<sub_id>', methods=['DELETE'])
+@app.route('/api/subscriptions/<sub_id>', methods=['DELETE'])
 @require_authentication
 def subscription_delete(sub_id):
 
@@ -356,7 +356,7 @@ def subscription_delete(sub_id):
     return 'ok', 200
 
 
-@app.route('/permissions/groups', methods=['GET'])
+@app.route('/api/permissions/groups', methods=['GET'])
 @require_authentication
 def permissions_groups_get():
 
@@ -373,7 +373,7 @@ def permissions_groups_get():
     return json.dumps(summaries)
 
 
-@app.route('/permissions/groups', methods=['POST'])
+@app.route('/api/permissions/groups', methods=['POST'])
 @require_authentication
 @request_body(PermissionsGroup)
 def permissions_groups_post(grp):
@@ -388,7 +388,7 @@ def permissions_groups_post(grp):
     return 'ok', 200
 
 
-@app.route('/permissions/groups/<group_id>', methods=['GET'])
+@app.route('/api/permissions/groups/<group_id>', methods=['GET'])
 @require_authentication
 def permissions_groups_id_get(group_id):
 
@@ -401,7 +401,7 @@ def permissions_groups_id_get(group_id):
         return 'not found', 404
 
 
-@app.route('/permissions/groups/<group_id>', methods=['PUT'])
+@app.route('/api/permissions/groups/<group_id>', methods=['PUT'])
 @require_authentication
 @request_body(PermissionsGroup)
 def permissions_groups_id_put(grp, group_id):
@@ -416,7 +416,7 @@ def permissions_groups_id_put(grp, group_id):
         return 'not found', 404
 
 
-@app.route('/permissions/groups/<group_id>', methods=['DELETE'])
+@app.route('/api/permissions/groups/<group_id>', methods=['DELETE'])
 @require_authentication
 def permissions_groups_id_delete(group_id):
 
@@ -425,7 +425,7 @@ def permissions_groups_id_delete(group_id):
     return 'ok', 200
 
 
-@app.route('/permissions/blades', methods=['GET'])
+@app.route('/api/permissions/blades', methods=['GET'])
 @require_authentication
 def permissions_blades_get():
 
@@ -437,7 +437,7 @@ def permissions_blades_get():
     return json.dumps(blades)
 
 
-@app.route('/permissions/blades/<blade_id>', methods=['GET'])
+@app.route('/api/permissions/blades/<blade_id>', methods=['GET'])
 @require_authentication
 def permissions_blades_id_get(blade_id):
 
@@ -453,7 +453,7 @@ def permissions_blades_id_get(blade_id):
         return 'not found', 404
 
 
-@app.route('/permissions/blades/<blade_id>', methods=['PUT'])
+@app.route('/api/permissions/blades/<blade_id>', methods=['PUT'])
 @require_authentication
 @request_body(PermissionsBlade)
 def permissions_blades_id_put(perms, blade_id):
@@ -473,7 +473,7 @@ def permissions_blades_id_put(perms, blade_id):
     return 'ok', 200
 
 
-@app.route('/permissions/blades/<blade_id>', methods=['DELETE'])
+@app.route('/api/permissions/blades/<blade_id>', methods=['DELETE'])
 @require_authentication
 def permissions_blades_id_delete(blade_id):
 
@@ -485,8 +485,8 @@ def permissions_blades_id_delete(blade_id):
     return 'ok', 200
 
 
-# The /timeline endpoint provides the current timeline for this blade.
-@app.route('/timeline', methods=['GET'])
+# The /api/timeline endpoint provides the current timeline for this blade.
+@app.route('/api/timeline', methods=['GET'])
 @require_authentication
 def timeline_get():
 
