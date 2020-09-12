@@ -125,6 +125,22 @@ def request_body(cls):
     return decorator
 
 
+def request_form(cls):
+    def decorator(f):
+        @functools.wraps(f)
+        def decorated_function(*args, **kwargs):
+            parsed = cls.parse(
+                request.form, request.files.getlist("attachments"))
+            if parsed is not None:
+                return f(parsed, *args, **kwargs)
+            else:
+                return 'bad request', 400
+
+        return decorated_function
+
+    return decorator
+
+
 class SignMessage:
     @staticmethod
     def parse(args):
@@ -138,6 +154,12 @@ class Password:
     @staticmethod
     def parse(pwd):
         return pwd
+
+
+class LoginFormPassword:
+    @staticmethod
+    def parse(form, files):
+        return form.get('password')
 
 
 class InboxMessage:
@@ -210,11 +232,68 @@ class FeedMessage:
         return message
 
 
+class FormFeedMessage:
+
+    @staticmethod
+    def parse(form, files):
+        cats = form.get('categories')
+        if cats is None:
+            cats = []
+
+        return {
+            'type': 'post',
+            'content': {
+                'text': form.get('content'),
+                'attachments': files
+            },
+            'permissions_categories': cats
+        }
+
+
+class TimelineOptions:
+
+    @staticmethod
+    def parse(args):
+
+        if not (len(args) <= 1 and all([k in ['last_seen'] for k in args])):
+            return None
+
+        last_seen = [None]
+
+        if 'last_seen' in args:
+            last_seen[0] = args['last_seen']
+
+        return last_seen
+
+
+class SubscriptionsOptions:
+
+    @staticmethod
+    def parse(args):
+
+        if not (len(args) <= 1 and all([k in ['last_seen'] for k in args])):
+            return None
+
+        last_seen = [None]
+
+        if 'last_seen' in args:
+            last_seen[0] = args['last_seen']
+
+        return last_seen
+
+
 class Subscription:
 
     @staticmethod
     def parse(blade_url):
         return blade_url
+
+
+class FormSubscription:
+
+    @staticmethod
+    def parse(form, files):
+        return form.get('blade_url')
 
 
 class PermissionsGroup:

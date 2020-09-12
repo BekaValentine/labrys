@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+    <title>{% block title %}Labrys - Home{% endblock %}</title>
+    <script>
+      function update_file_list() {
+        attachments = document.getElementById("attachments");
+        attached_files = document.getElementById("attached_files");
+        while (attached_files.children.length > 0) {
+          attached_files.removeChild(attached_files.children[0]);
+        }
+        for (let i = 0; i < attachments.files.length; i++) {
+          const file = attachments.files[i];
+          let p = document.createElement("p");
+          p.append(file.name);
+          p.className = "attachment_name";
+          attached_files.appendChild(p);
+        }
+      }
+
+      function remove_attachments() {
+        attachments = document.getElementById("attachments");
+        attachments.value = "";
+        update_file_list();
+      }
+    </script>
+  </head>
+  <body>
+    {% block nav %}
+    {% if logged_in %}
+    <nav>
+      <a href="/">[.. home ..]</a>
+      <a href="/feed">[.. feed ..]</a>
+      <a href="/timeline">[.. timeline ..]</a>
+      <a href="/subscriptions">[.. subscriptions ..]</a>
+      <a href="/subscribers">[.. subscribers ..]</a>
+      <a href="/private_messages">[.. private messages ..]</a>
+    </nav>
+    {% else %}
+    <nav>
+      <a href="/">[.. home ..]</a>
+      <a href="/feed">[.. feed ..]</a>
+    </nav>
+    {% endif %}
+    {% endblock %}
+    <section id="content">
+      {% block content %}{% endblock %}
+    </section>
+  </body>
+</html>

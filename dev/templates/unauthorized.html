@@ -1,0 +1,10 @@
+{% extends "base_template.html" %}
+{% block title %}Labrys - Unauthorized{% endblock %}
+{% block content %}
+      <h1>unauthorized</h1>
+      {% if reason == 'failed_login' %}
+      <p>the login password you provided was not correct.</p>
+      {% else %}
+      <p>you must be logged in to view this page.</p>
+      {% endif %}
+{% endblock %}

@@ -1,0 +1,50 @@
+{% extends "base_template.html" %}
+{% block title %}Labrys - Timeline{% endblock %}
+{% block content %}
+      <h2>timeline</h2>
+      <div id="messages">
+        {% if messages|length == 0 %}
+        <p>no posts</p>
+        {% else %}
+        {% for message in messages %}
+        <div class="message">
+          <div class="message_left_column">
+            <img src="/known_blades/avatars/{{ message['blade_identity']['avatar_filename'] }}" class="message_avatar"/>
+          </div>
+          <div class="message_right_column">
+            <div class="message_header">
+              <p class="message_display_name"><a href="/blade/{{ message['url'] }}">{{ message['blade_identity']['display_name'] }}</a></p>
+              <p class="message_publish_datetime">{{ message['publish_datetime']|formatdatetime }}</p>
+            </div>
+            <p class="message_text">{{ message['content']['text'] }}</p>
+            {% if message['content']['attachments']|length > 0 %}
+            <p class="message_attachments">
+              {% for attachment in message['content']['attachments'] %}
+              {% if attachment['content_type'] == 'image' %}
+              <a href="http://{{ message['url'] }}/api/feed_attachments/{{ attachment['file_name'] }}"><img src="http://{{ message['url'] }}/api/feed_attachments/{{ attachment['file_name'] }}"/></a>
+              {% elif attachment['content_type'] == 'video' %}
+              <video controls src="http://{{ message['url'] }}/api/feed_attachments/{{ attachment['file_name'] }}" width="250px">
+                your browser does't support the <code>video</code> element. download this file <a href="http://{{ message['url'] }}/api/feed_attachments/{{ attachment['file_name'] }}">here</a>.
+              </video>
+              {% elif attachment['content_type'] == 'audio' %}
+              <audio controls src="http://{{ message['url'] }}/api/feed_attachments/{{ attachment['file_name'] }}">
+                your browser does't support the <code>audio</code> element. download this file <a href="http://{{ message['url'] }}/api/feed_attachments/{{ attachment['file_name'] }}">here</a>.
+              </audio>
+              {% else %}
+              <a href="http://{{ message['url'] }}/api/feed_attachments/{{ attachment['file_name'] }}">{{ attachment['file_name'] }}</a>
+              {% endif %}
+              {% endfor %}
+            </p>
+            {% endif %}
+            <p class="message_links"><a href="/timeline/{{ message['id'] }}">view post</a></p>
+          </div>
+        </div>
+        {% endfor %}
+        {% if next_last_seen %}
+        <p>
+          <a href="/timeline?last_seen={{ next_last_seen }}">more</a>
+        </p>
+        {% endif %}
+        {% endif %}
+      </div>
+{% endblock %}

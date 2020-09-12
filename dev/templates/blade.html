@@ -1,0 +1,66 @@
+{% extends "base_template.html" %}
+{% block title %}Labrys - Blade{% endblock %}
+{% block content %}
+      <h2>blade</h2>
+      {% if blade_identity %}
+      <img id="blade_avatar" src="/known_blades/avatars/{{ blade_identity['avatar_filename' ]}}" />
+      <p id="blade_display_name">{{ blade_identity['display_name'] }}</p>
+      <p id="blade_url"><a href="http://{{ blade_identity['url'] }}">{{ blade_identity['url'] }}</a></p>
+      <p id="blade_public_signing_key">{{ blade_identity['public_signing_key'] }}</p>
+      <p id="blade_bio">{{ blade_identity['bio'] }}</p>
+      {% if subscription_id %}
+      <form id="blade_unsubscribe" action="/subscriptions/{{ subscription_id }}/delete" method="POST">
+        <button type="submit">unsubscribe</button>
+      </form>
+      {% else %}
+      <form id="blade_subscribe" action="/subscriptions" method="post">
+        <input type="hidden" name="blade_url" value="{{ blade_identity['url'] }}" />
+        <button type="submit">subscribe</button>
+      </form>
+      {% endif %}
+      <div id="messages">
+        <h2>posts</h2>
+        {% if messages %}
+          {% for message in messages %}
+
+        <div class="message">
+          <div class="message_left_column">
+            <img src="/known_blades/avatars/{{ blade_identity['avatar_filename'] }}" class="message_avatar"/>
+          </div>
+          <div class="message_right_column">
+            <div class="message_header">
+              <p class="message_display_name"><a href="/blade/{{ blade_identity['url'] }}">{{ blade_identity['display_name'] }}</a></p>
+              <p class="message_publish_datetime">{{ message['publish_datetime']|formatdatetime }}</p>
+            </div>
+            <p class="message_text">{{ message['content']['text'] }}</p>
+            {% if message['content']['attachments']|length > 0 %}
+            <p class="message_attachments">
+              {% for attachment in message['content']['attachments'] %}
+              {% if attachment['content_type'] == 'image' %}
+              <a href="http://{{ blade_identity['url'] }}/api/feed_attachments/{{ attachment['file_name'] }}"><img src="http://{{ blade_identity['url'] }}/api/feed_attachments/{{ attachment['file_name'] }}"/></a>
+              {% elif attachment['content_type'] == 'video' %}
+              <video controls src="http://{{ blade_identity['url'] }}/api/feed_attachments/{{ attachment['file_name'] }}" width="250px">
+                your browser does't support the <code>video</code> element. download this file <a href="http://{{ blade_identity['url'] }}/api/feed_attachments/{{ attachment['file_name'] }}">here</a>.
+              </video>
+              {% elif attachment['content_type'] == 'audio' %}
+              <audio controls src="http://{{ blade_identity['url'] }}/api/feed_attachments/{{ attachment['file_name'] }}">
+                your browser does't support the <code>audio</code> element. download this file <a href="http://{{ blade_identity['url'] }}/api/feed_attachments/{{ attachment['file_name'] }}">here</a>.
+              </audio>
+              {% else %}
+              <a href="http://{{ blade_identity['url'] }}/api/feed_attachments/{{ attachment['file_name'] }}">{{ attachment['file_name'] }}</a>
+              {% endif %}
+              {% endfor %}
+            </p>
+            {% endif %}
+          </div>
+        </div>
+
+          {% endfor %}
+        {% else %}
+        <p>no posts</p>
+        {% endif %}
+      </div>
+      {% else %}
+      <p>no such blade</p>
+      {% endif %}
+{% endblock %}

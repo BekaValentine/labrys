@@ -14,30 +14,35 @@ def decode_public_key(s):
     return str(base64.urlsafe_b64decode(bytes(s, encoding='ascii')), encoding='ascii')
 
 
-def load_and_cache_blade_identity(known_blades_dir, known_blades_db, blade_url):
+def load_and_cache_blade_identity(known_blades_avatars_dir, known_blades_db, blade_url):
 
     blade_identity = {'url': blade_url}
 
-    resp = requests.get(blade_url + '/identity/public_signing_key')
+    try:
+        resp = requests.get('http://' + blade_url +
+                            '/api/identity/public_signing_key')
+    except requests.exceptions.ConnectionError:
+        return None
+
     if resp.status_code != 200:
         return None
 
-    blade_info['public_signing_key'] = resp.text
+    blade_identity['public_signing_key'] = resp.text
 
     previous = known_blades_db.search(
-        Query().public_signing_key == blade_info['public_signing_key'])
+        Query().public_signing_key == blade_identity['public_signing_key'])
     if previous:
         return previous[0]
 
-    resp = requests.get(blade_url + '/identity/display_name')
+    resp = requests.get('http://' + blade_url + '/api/identity/display_name')
     if resp.status_code == 200:
-        blade_info['display_name'] = resp.text
+        blade_identity['display_name'] = resp.text
 
-    resp = requests.get(blade_url + '/identity/bio')
+    resp = requests.get('http://' + blade_url + '/api/identity/bio')
     if resp.status_code == 200:
-        blade_info['bio'] = resp.text
+        blade_identity['bio'] = resp.text
 
-    resp = requests.get(blade_url + '/identity/avatar')
+    resp = requests.get('http://' + blade_url + '/api/identity/avatar')
     if resp.status_code == 200:
         ct = resp.headers['Content-Type']
         if ct == 'image/jpeg':
@@ -50,15 +55,15 @@ def load_and_cache_blade_identity(known_blades_dir, known_blades_db, blade_url):
             ext = None
 
         if ext:
-            blade_info['avatar_filename'] = encode_public_key(
-                blade_info['public_signing_key']) + '.' + ext
-            with open(os.path.join(known_blades_dir, blade_info['avatar_filename']), 'wb') as fd:
+            blade_identity['avatar_filename'] = encode_public_key(
+                blade_identity['public_signing_key']) + '.' + ext
+            with open(os.path.join(known_blades_avatars_dir, blade_identity['avatar_filename']), 'wb') as fd:
                 for chunk in resp.iter_content(chunk_size=128):
                     fd.write(chunk)
 
-    known_blades_db.insert(blade_info)
+    known_blades_db.insert(blade_identity)
 
-    return blade_info
+    return blade_identity
 
 
 def cached_blade_identity(known_blades_db, public_signing_key):

@@ -1,6 +1,32 @@
-<html>
-  <body>
-    <p>Welcome to this Labrys Blade! We hope you enjoy your time here.</p>
-    <p>Click <a href="/identity/authenticate">here</a> to authenticate with this blade.</p>
-  </body>
-</html>
+{% extends "base_template.html" %}
+{% block nav %}{% endblock %}
+{% block content %}
+      <img src="{{ avatar_url }}"/>
+      <p id="main_page_display_name">{{ display_name }}</p>
+      <p id="main_page_bio">{{ bio }}</p>
+      <p id="main_page_public_signing_key">{{ public_signing_key }}</p>
+      {% if not logged_in %}
+      <form id="main_page_login_form" action="/login" method="post">
+        <p>
+          <input type="password" placeholder="password" name="password" required />
+          <button type="submit">login</button>
+        </p>
+      </form>
+      <nav>
+        <a href="/feed">[.. feed ..]</a>
+      </nav>
+      {% else %}
+      <form id="main_page_logout_form" action="/logout" method="post">
+        <p>
+          <button type="submit">logout</button>
+        </p>
+      </form>
+      <nav>
+        <a href="/feed">[.. feed ..]</a>
+        <a href="/timeline">[.. timeline ..]</a>
+        <a href="/subscriptions">[.. subscriptions ..]</a>
+        <a href="/subscribers">[.. subscribers ..]</a>
+        <a href="/private_messages">[.. private messages ..]</a>
+      </nav>
+      {% endif %}
+{% endblock %}

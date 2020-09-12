@@ -1,0 +1,271 @@
+* {
+  font-family: monospace;
+  padding: 0;
+  margin: 0;
+  color: #ffffff;
+  background-color: #000000;
+}
+
+button {
+  border: 1px solid #006600;
+  padding: 5px;
+  font-size: 1em;
+}
+
+input[type="password"] {
+  border: 1px solid #006600;
+  padding: 5px;
+}
+
+.attachments_label {
+  border: 1px solid #006600;
+  padding: 5px;
+  font-size: 1em;
+}
+input[type="file"] {
+  display: none;
+}
+
+textarea {
+  border: 1px solid #006600;
+  padding: 5px;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    align-items: center;
+    padding-bottom: 50px;
+}
+
+nav {
+  margin-top: 20px;
+  width: 500px;
+  display: flex;
+  flex-direction: column;
+  flex-wrap: nowrap;
+  justify-content: flex-start;
+}
+
+nav a {
+  margin-top: 5px;
+}
+
+#content {
+  width: 500px;
+  margin-top: 20px;
+}
+
+#content h2 {
+  padding: 0;
+}
+
+#main_page_display_name {
+  margin-top: 10px;
+}
+
+#main_page_bio {
+  margin-top: 10px;
+}
+
+#main_page_public_signing_key{
+  margin-top: 10px;
+}
+
+#main_page_login_form {
+  margin-top: 10px;
+}
+
+#main_page_logout_form {
+  margin-top: 10px;
+}
+
+#new_message {
+  margin-top: 20px;
+}
+
+#new_message textarea {
+  resize: vertical;
+  width: 490px;
+  min-height: 50px;
+}
+
+#new_message_buttons {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  justify-content: space-between;
+}
+
+#messages {
+  margin-top: 20px;
+}
+
+.message {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  justify-content: flex-start;
+  margin-top: 10px;
+  padding: 20px 0 20px 0;
+  border-top: 1px solid #999999;
+}
+
+.message_left_column {
+  width: 50px;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  justify-content: flex-end;
+}
+
+.message_avatar {
+  width: auto;
+  height: auto;
+  max-width: 50px;
+  max-height: 50px;
+}
+
+.message_right_column {
+  margin-left: 10px;
+}
+
+.message_header {
+  /* background-color: green; */
+  height: 50px;
+}
+.message_display_name {
+  font-weight: 900;
+}
+
+.message_publish_datetime {
+  font-style: italic;
+  font-size: 0.8em;
+  color: #666666;
+}
+
+.message_text {
+  margin-top: 10px;
+}
+
+.message_attachments {
+  margin-top: 10px;
+}
+
+.attachment_name {
+  margin-top: 10px;
+  font-style: italic;
+  font-size: 0.8em;
+  color: #666666;
+}
+
+.remove_attachment_button {
+  margin-right: 10px;
+  color: #00ff00;
+  border: none;
+}
+
+.message_attachments img, .message_attachments img {
+  width: 100px;
+}
+
+.message_links, .message_links {
+  margin-top: 10px;
+}
+
+#add_subscription {
+  margin-top: 10px;
+}
+
+.add_subscription_blade_url {
+  border: 1px solid #006600;
+  padding: 5px;
+}
+
+.add_subscription_subscribe {
+
+}
+
+#subscriptions {
+  margin-top: 20px;
+}
+
+#subscriptions ul {
+  list-style-type: none;
+}
+
+.subscription {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  justify-content: flex-start;
+  margin-top: 10px;
+  padding: 20px 0 20px 0;
+  border-top: 1px solid #999999;
+}
+
+.subscription_left_column {
+  width: 50px;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  justify-content: flex-end;
+}
+
+.subscription_avatar {
+  width: auto;
+  height: auto;
+  max-width: 50px;
+  max-height: 50px;
+}
+
+.subscription_right_column {
+  margin-left: 10px;
+}
+
+.subscription_blade_url {
+  margin-top: 10px;
+}
+
+.subscription_public_signing_key {
+  margin-top: 10px;
+}
+
+.subscription_bio {
+  margin-top: 10px;
+}
+
+.subscription_unsubscribe {
+  margin-top: 10px;
+}
+
+#blade_avatar {
+  margin-top: 10px;
+}
+
+#blade_display_name {
+  margin-top: 10px;
+}
+
+#blade_url {
+  margin-top: 10px;
+}
+
+#blade_public_signing_key {
+  margin-top: 10px;
+}
+
+#blade_bio {
+  margin-top: 10px;
+}
+
+#blade_unsubscribe, #blade_subscribe {
+  margin-top: 10px;
+}
+
+#messages {
+  margin-top: 20px;
+}

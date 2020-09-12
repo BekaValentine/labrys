@@ -14,6 +14,7 @@ def noninteractive(data_dir, canonical_url, display_name, bio, password):
     os.makedirs(os.path.join(data_dir, 'identity'), exist_ok=True)
     os.makedirs(os.path.join(data_dir, 'permissions'), exist_ok=True)
     os.makedirs(os.path.join(data_dir, 'known_blades_avatars'), exist_ok=True)
+    os.makedirs(os.path.join(data_dir, 'feed_attachments'), exist_ok=True)
 
     with open(os.path.join(data_dir, 'blade_url.txt'), 'w') as f:
         f.write(canonical_url)
@@ -140,5 +141,6 @@ else:
     parser.add_argument(
         '<password>', help='The password you will use to log into this blade.')
     args = vars(parser.parse_args())
+    print(args)
     noninteractive(args['<data-dir>'], args['<canonical-url>'],
                    args['<display-name>'], args['<bio>'], args['<password>'])

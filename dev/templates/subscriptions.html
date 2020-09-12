@@ -1,0 +1,40 @@
+{% extends "base_template.html" %}
+{% block title %}Labrys - Subscriptions{% endblock %}
+{% block content %}
+      <h2>subscriptions</h2>
+      <div id="add_subscription">
+        <form action="/subscriptions" method="post">
+          <input class="add_subscription_blade_url" type="text" name="blade_url" placeholder="blade url" required />
+          <button type="submit">subscribe</button>
+        </form>
+      </div>
+      <div id="subscriptions">
+        {% if subscriptions|length == 0 %}
+        <p>no subscriptions</p>
+        {% else %}
+        <ul>
+          {% for sub in subscriptions %}
+          <li class="subscription">
+            <div class="subscription_left_column">
+              <img src="/known_blades/avatars/{{ sub['avatar_filename' ]}}" class="subscription_avatar" />
+            </div>
+            <div class="subscription_right_column">
+              <p class="subscription_display_name">{{ sub['display_name'] }}</p>
+              <p class="subscription_blade_url"><a href="/blade/{{ sub['url'] }}">{{ sub['url'] }}</a></p>
+              <p class="subscription_public_signing_key">{{ sub['public_signing_key'] }}</p>
+              <p class="subscription_bio">{{ sub['bio'] }}</p>
+              <form class="subscription_unsubscribe" action="/subscriptions/{{ sub['id'] }}/delete" method="POST">
+                <button type="submit">unsubscribe</button>
+              </form>
+            </div>
+          </li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+        {% if next_last_seen %}
+        <p>
+          <a href="/subscriptions?last_seen={{ next_last_seen }}">more</a>
+        </p>
+        {% endif %}
+      </div>
+{% endblock %}

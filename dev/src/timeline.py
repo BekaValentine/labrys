@@ -24,7 +24,7 @@ def update_subscriptions(private_signing_key_file, public_signing_key_file, subs
             public_signing_key_file,
             sub['public_signing_key'],
             requests.get,
-            sub['url'] + '/feed',
+            'http://' + sub['url'] + '/api/feed',
             {'last_seen': sub['last_seen']})
 
         if resp_data is not None:
