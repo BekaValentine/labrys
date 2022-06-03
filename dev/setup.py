@@ -3,9 +3,11 @@ import base64
 import bcrypt
 import nacl.signing
 import os
-import src.passwords as passwords
 import sys
 import time
+
+
+import src.passwords as passwords
 
 
 def noninteractive(data_dir, canonical_url, display_name, bio, password):

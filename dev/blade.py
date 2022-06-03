@@ -1,29 +1,36 @@
-import base64
-from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives import serialization, hashes
-from cryptography.hazmat.primitives.asymmetric import ec
-from cryptography.hazmat.primitives.kdf.hkdf import HKDF
-from cryptography.fernet import Fernet
-import datetime
-from flask import *
-import html
-import nacl.encoding
-import nacl.signing
-import os
-import random
-import re
-import requests
-import sys
 from tinydb import TinyDB, Query
+import sys
+import requests
+import re
+import random
+import os
+import nacl.signing
+import nacl.encoding
+import html
+from flask import *
+import datetime
+from cryptography.fernet import Fernet
+from cryptography.hazmat.primitives.kdf.hkdf import HKDF
+from cryptography.hazmat.primitives.asymmetric import ec
+from cryptography.hazmat.primitives import serialization, hashes
+from cryptography.hazmat.backends import default_backend
+import base64
 
 # Labrys imports
-from src.auth import *
-from src.blade_identity import *
-import src.datastore as datastore
-import src.passwords as passwords
-import src.permissions as permissions
-from src.timeline import *
+
 from src.viewarguments import *
+import src.identity_manager as identity_manager
+import src.encryption_manager as encryption_manager
+import src.feed_manager as feed_manager
+import src.permissions_manager as permissions_manager
+import src.subscriptions_manager as subscriptions_manager
+import src.known_blades_manager as known_blades_manager
+import src.timeline_manager as timeline_manager
+import src.public_keys as public_keys
+import src.private_message_manager as private_message_manager
+from src.auth import *
+
+################################################################################
 
 app = Flask(__name__)
 
@@ -32,58 +39,38 @@ if not DATA_DIR:
     print('Data directory is needed.')
     exit()
 
-SECRETS_DIR = os.path.join(DATA_DIR, 'secrets')
-SESSION_SECRET_KEY_FILE = os.path.join(SECRETS_DIR, 'session_secret_key.txt')
-PRIVATE_SIGNING_KEY_FILE = os.path.join(SECRETS_DIR, 'private_signing_key.txt')
-PASSWORD_HASH_FILE = os.path.join(SECRETS_DIR, 'password_hash.txt')
 
-IDENTITY_DIR = os.path.join(DATA_DIR, 'identity')
-DISPLAY_NAME_FILE = os.path.join(IDENTITY_DIR, 'display_name.txt')
-BIO_FILE = os.path.join(IDENTITY_DIR, 'bio.txt')
-PUBLIC_SIGNING_KEY_FILE = os.path.join(IDENTITY_DIR, 'public_signing_key.txt')
-
-PERMISSIONS_DIR = os.path.join(DATA_DIR, 'permissions')
-PERMISSIONS_GROUPS_DB = TinyDB(os.path.join(PERMISSIONS_DIR, 'groups.json'))
-PERMISSIONS_BLADES_DB = TinyDB(os.path.join(PERMISSIONS_DIR, 'blades.json'))
-
-INBOX_DB = TinyDB(os.path.join(DATA_DIR, 'inbox.json'))
-
-OUTBOX_DB = TinyDB(os.path.join(DATA_DIR, 'outbox.json'))
-
-FEED_DB = TinyDB(os.path.join(DATA_DIR, 'feed.json'))
-FEED_ATTACHMENTS_DIR = os.path.join(DATA_DIR, 'feed_attachments')
-
-SUBSCRIPTIONS_DB = TinyDB(os.path.join(DATA_DIR, 'subscriptions.json'))
-
-TIMELINE_CACHE_DB = TinyDB(os.path.join(DATA_DIR, 'timeline_cache.json'))
-
-KNOWN_BLADES_DB = TinyDB(os.path.join(DATA_DIR, 'known_blades.json'))
-KNOWN_BLADES_AVATARS_DIR = os.path.join(DATA_DIR, 'known_blades_avatars')
-
-DATA_STORE = datastore.DataStore(
-    identity_dir=IDENTITY_DIR,
-    display_name_file=DISPLAY_NAME_FILE,
-    bio_file=BIO_FILE,
-    private_signing_key_file=PRIVATE_SIGNING_KEY_FILE,
-    public_signing_key_file=PUBLIC_SIGNING_KEY_FILE,
-    feed_db=FEED_DB,
-    feed_attachments_dir=FEED_ATTACHMENTS_DIR,
-    timeline_cache_db=TIMELINE_CACHE_DB,
-    permissions_groups_db=PERMISSIONS_GROUPS_DB,
-    permissions_blades_db=PERMISSIONS_BLADES_DB,
-    subscriptions_db=SUBSCRIPTIONS_DB,
-    known_blades_db=KNOWN_BLADES_DB,
-    known_blades_avatars_dir=KNOWN_BLADES_AVATARS_DIR,
+IDENTITY_MANAGER = identity_manager.IdentityManager(DATA_DIR)
+ENCRYPTION_MANAGER = encryption_manager.EncryptionManager(IDENTITY_MANAGER)
+PERMISSIONS_MANAGER = permissions_manager.PermissionsManager(DATA_DIR)
+FEED_MANAGER = feed_manager.FeedManager(
+    DATA_DIR,
+    IDENTITY_MANAGER,
+    PERMISSIONS_MANAGER,
+)
+KNOWN_BLADES_MANAGER = known_blades_manager.KnownBladesManager(DATA_DIR)
+SUBSCRIPTIONS_MANAGER = subscriptions_manager.SubscriptionsManager(
+    DATA_DIR,
+    IDENTITY_MANAGER,
+    ENCRYPTION_MANAGER,
+    KNOWN_BLADES_MANAGER,
+)
+TIMELINE_MANAGER = timeline_manager.TimelineManager(
+    DATA_DIR,
+    IDENTITY_MANAGER,
+    SUBSCRIPTIONS_MANAGER,
+    KNOWN_BLADES_MANAGER,
+)
+PRIVATE_MESSAGE_MANAGER = private_message_manager.PrivateMessageManager(
+    DATA_DIR,
+    IDENTITY_MANAGER,
+    ENCRYPTION_MANAGER,
+    KNOWN_BLADES_MANAGER,
+    SUBSCRIPTIONS_MANAGER,
 )
 
 # The Session Secret Key is used to sign cookies.
-with open(SESSION_SECRET_KEY_FILE, 'r') as f:
-    app.secret_key = f.read().strip()
-
-
-# Blade URL
-with open(os.path.join(DATA_DIR, 'blade_url.txt'), 'r') as f:
-    BLADE_URL = f.read().strip()
+app.secret_key = IDENTITY_MANAGER.unsafe_session_secret_key()
 
 
 @app.template_filter('formatdatetime')
@@ -106,13 +93,13 @@ def format_datetime(value, format="%-H:%M %p, %b %-d, %Y (UTC)"):
 # FORM: login
 @app.route('/', methods=['GET'])
 def labrys_home():
-    if DATA_STORE.avatar_file_name() is not None:
+    if IDENTITY_MANAGER.avatar_file_name() is not None:
         avatar_url = '/api/identity/avatar'
     else:
         avatar_url = None
-    display_name = DATA_STORE.display_name()
-    bio = DATA_STORE.bio()
-    public_signing_key = DATA_STORE.public_signing_key()
+    display_name = IDENTITY_MANAGER.display_name()
+    bio = IDENTITY_MANAGER.bio()
+    public_signing_key = IDENTITY_MANAGER.public_signing_key()
     return render_template('main_page.html',
                            avatar_url=avatar_url,
                            display_name=display_name,
@@ -125,10 +112,7 @@ def labrys_home():
 @app.route('/login', methods=['POST'])
 @request_form(LoginFormPassword)
 def login(submitted_password):
-    with open(PASSWORD_HASH_FILE, 'r') as f:
-        password_hash = f.read()
-
-    if not passwords.check_password(submitted_password, password_hash):
+    if not IDENTITY_MANAGER.check_password(submitted_password):
         return redirect('/failed_login')
 
     session['authenticated'] = 'authenticated'
@@ -151,30 +135,45 @@ def logout():
 def feed_get(last_seen):
     logged_in = session.get('authenticated') == 'authenticated'
 
-    if DATA_STORE.avatar_file_name() is not None:
+    if IDENTITY_MANAGER.avatar_file_name() is not None:
         avatar_url = '/api/identity/avatar'
     else:
         avatar_url = None
 
     if logged_in:
-        messages, next_last_seen = DATA_STORE.feed_owner_authorization(
+        messages, next_last_seen = FEED_MANAGER.feed_owner_authorization(
             last_seen)
     else:
-        messages, next_last_seen = DATA_STORE.feed_public_authorization(
+        messages, next_last_seen = FEED_MANAGER.feed_public_authorization(
             last_seen)
 
-    return render_template('feed.html', logged_in=logged_in, display_name=DATA_STORE.display_name(), avatar_url=avatar_url, messages=messages, next_last_seen=next_last_seen)
+    return render_template('feed.html', logged_in=logged_in, display_name=IDENTITY_MANAGER.display_name(), avatar_url=avatar_url, messages=messages, next_last_seen=next_last_seen)
 
 
 @app.route('/feed/<message_id>', methods=['GET'])
 def feed_id_get(message_id):
-    return 'ok'
+    logged_in = session.get('authenticated') == 'authenticated'
+
+    if IDENTITY_MANAGER.avatar_file_name() is not None:
+        avatar_url = '/api/identity/avatar'
+    else:
+        avatar_url = None
+
+    if logged_in:
+        message = FEED_MANAGER.message_with_id(message_id)
+    else:
+        message = FEED_MANAGER.message_with_id_public_authorization(message_id)
+
+    if message is None:
+        return redirect('/')
+
+    return render_template('feed_message.html', logged_in=True, display_name=IDENTITY_MANAGER.display_name(), avatar_url=avatar_url, message=message)
 
 
 @app.route('/feed', methods=['POST'])
 @request_form(FormFeedMessage)
 def feed_post(message):
-    DATA_STORE.add_feed_message(message)
+    FEED_MANAGER.add_feed_message(message)
 
     return redirect('/feed')
 
@@ -186,7 +185,7 @@ def timeline(last_seen):
     if not session.get('authenticated') == 'authenticated':
         return redirect('/')
 
-    messages, next_last_seen = DATA_STORE.timeline(last_seen)
+    messages, next_last_seen = TIMELINE_MANAGER.timeline(last_seen)
 
     return render_template('timeline.html', logged_in=True, messages=messages, next_last_seen=next_last_seen)
 
@@ -203,7 +202,7 @@ def subscriptions_get(last_seen):
     if not session.get('authenticated') == 'authenticated':
         return redirect('/')
 
-    subs, next_last_seen = DATA_STORE.subscriptions(last_seen)
+    subs, next_last_seen = SUBSCRIPTIONS_MANAGER.subscriptions(last_seen)
 
     return render_template('subscriptions.html', logged_in=True, subscriptions=subs, next_last_seen=next_last_seen)
 
@@ -214,7 +213,7 @@ def subscriptions_post(blade_url):
     if not session.get('authenticated') == 'authenticated':
         return redirect('/')
 
-    DATA_STORE.add_subscription(blade_url)
+    SUBSCRIPTIONS_MANAGER.add_subscription(blade_url)
 
     return redirect('/subscriptions')
 
@@ -224,7 +223,7 @@ def subscriptions_delete(subscription_id):
     if not session.get('authenticated') == 'authenticated':
         return redirect('/')
 
-    DATA_STORE.remove_subscription(subscription_id)
+    SUBSCRIPTIONS_MANAGER.remove_subscription(subscription_id)
 
     return redirect('/subscriptions')
 
@@ -235,16 +234,41 @@ def subscribers():
     if not session.get('authenticated') == 'authenticated':
         return redirect('/')
 
-    return render_template('subscribers.html', logged_in=True)
+    subscribers_info = [KNOWN_BLADES_MANAGER.cached_blade_identity(sub['public_signing_key'])
+                        for sub in SUBSCRIPTIONS_MANAGER.all_subscribers()]
+
+    return render_template('subscribers.html', logged_in=True, subscribers=subscribers_info)
 
 
 # The private_messages endpoint displays the user's private messages
 @app.route('/private_messages', methods=['GET'])
-def private_messages():
+def private_messages_get():
     if not session.get('authenticated') == 'authenticated':
         return redirect('/')
 
-    return render_template('private_messages.html', logged_in=True)
+    return render_template('private_messages.html', logged_in=True, known_blades=KNOWN_BLADES_MANAGER.all_known_blades())
+
+
+@app.route('/private_messages', methods=['POST'])
+@request_form(FormPrivateMessage)
+def private_messages_post(private_message):
+    if not session.get('authenticated') == 'authenticated':
+        return redirect('/')
+
+    print('NEW PRIVATE MESSAGE', private_message)
+
+    message = {
+        'type': 'private_message',
+        'public_signing_key': private_message['receiver'],
+        'content': {
+            'text': private_message['text']
+        }
+    }
+
+    if PRIVATE_MESSAGE_MANAGER.add_outbox_message(message):
+        return redirect('/private_messages')
+
+    return 'ok', 200
 
 
 # The blade endpoint displays other blades information
@@ -253,7 +277,8 @@ def blade_get(blade_url):
     if not session.get('authenticated') == 'authenticated':
         return redirect('/')
 
-    blade_identity, messages, subscription_id = DATA_STORE.blade(blade_url)
+    blade_identity, messages, subscription_id = KNOWN_BLADES_MANAGER.blade(
+        blade_url)
 
     return render_template('blade.html', logged_in=True, blade_identity=blade_identity, subscription_id=subscription_id, messages=messages)
 
@@ -263,7 +288,7 @@ def known_blades_avatars_get(avatar_file_name):
     if not session.get('authenticated') == 'authenticated':
         return redirect('/')
 
-    return send_from_directory(KNOWN_BLADES_AVATARS_DIR, avatar_file_name)
+    return send_from_directory(KNOWN_BLADES_MANAGER.known_blades_avatars_dir, avatar_file_name)
 
 
 # The unauthorized endpoint tells the user that they're accessing a page that
@@ -290,41 +315,37 @@ def page_not_found(e):
 # which is usually the display name, bio, and avatar.
 @app.route('/api/identity/avatar', methods=['GET'])
 def api_identity_avatar():
-    avatar_file_name = DATA_STORE.avatar_file_name()
+    avatar_file_name = IDENTITY_MANAGER.avatar_file_name()
 
     if avatar_file_name is None:
         return 'not found', 404
     else:
-        return send_from_directory(IDENTITY_DIR, avatar_file_name)
+        return send_from_directory(IDENTITY_MANAGER.identity_dir, avatar_file_name)
 
 
 # Gets the display name
 @app.route('/api/identity/display_name', methods=['GET'])
 def api_identity_display_name():
-    return DATA_STORE.display_name()
+    return IDENTITY_MANAGER.display_name()
 
 
 # Gets the bio
 @app.route('/api/identity/bio', methods=['GET'])
 def api_identity_bio():
-    return DATA_STORE.bio()
+    return IDENTITY_MANAGER.bio()
 
 
 # Gets the public signing key
 @app.route('/api/identity/public_signing_key', methods=['GET'])
 def api_identity_public_signing_key():
-    return DATA_STORE.public_signing_key()
+    return IDENTITY_MANAGER.public_signing_key()
 
 
 # The identity/sign endpoint is used to get a signed value from the blade.
 @app.route('/api/identity/sign', methods=['GET'])
 @query_params(SignMessage)
 def api_identity_sign(message):
-    with open(PRIVATE_SIGNING_KEY_FILE, 'r') as f:
-        signing_key = nacl.signing.SigningKey(f.read().encode(
-            encoding='ascii'), encoder=nacl.encoding.Base64Encoder)
-        signed = signing_key.sign(message.encode(encoding='ascii'))
-        return base64.b64encode(signed.signature)
+    return IDENTITY_MANAGER.sign(message)
 
 
 # The identity/deauthenticate endpoint provides a means for the blade owner to
@@ -340,10 +361,7 @@ def api_identity_deauthenticate():
 @app.route('/api/identity/authenticate', methods=['POST'])
 @request_body(Password)
 def api_identity_authenticate_post(submitted_password):
-    with open(PASSWORD_HASH_FILE, 'r') as f:
-        password_hash = f.read().strip()
-
-    if not passwords.check_password(submitted_password, password_hash):
+    if not IDENTITY_MANAGER.check_password(submitted_password):
         return 'unauthorized', 401
 
     session['authenticated'] = 'authenticated'
@@ -355,34 +373,14 @@ def api_identity_authenticate_post(submitted_password):
 @app.route('/api/inbox', methods=['GET'])
 @require_authentication
 def api_inbox_get():
-    return json.dumps(INBOX_DB.all()), 200
+    return json.dumps(PRIVATE_MESSAGE_MANAGER.all_inbox_messages()), 200
 
 
 @app.route('/api/inbox', methods=['POST'])
 @request_body(InboxMessage)
-def api_inbox_post(sender_info):
+def api_inbox_post(message):
 
-    resp_data = dh_sessions.encrypted_client_request(
-        PRIVATE_SIGNING_KEY_FILE,
-        PUBLIC_SIGNING_KEY_FILE,
-        sender_info['public_signing_key'],
-        requests.get,
-        sender_info['url'] + '/api/outbox')
-
-    if resp_data:
-        received_messages = json.loads(resp_data)
-
-        for msg in received_messages:
-            if not INBOX_DB.search(Query().origin_id == msg['id']):
-                INBOX_DB.insert({
-                    'id': ''.join([random.choice('0123456789abcdef')
-                                   for i in range(30)]),
-                    'origin_id': msg['id'],
-                    'sender': sender_info['public_signing_key'],
-                    'sent_datetime': msg['sent_datetime'],
-                    'type': msg['type'],
-                    'content': msg['content']
-                })
+    PRIVATE_MESSAGE_MANAGER.handle_new_inbox_message(message)
 
     return 'ok', 200
 
@@ -391,7 +389,7 @@ def api_inbox_post(sender_info):
 @require_authentication
 def api_inbox_delete(message_id):
 
-    INBOX_DB.remove(Query().id == message_id)
+    PRIVATE_MESSAGE_MANAGER.remove_inbox_message_with_id(message_id)
 
     return 'ok', 200
 
@@ -405,14 +403,12 @@ def api_outbox_get(authorization):
         return 'unauthorized', 401
 
     messages = []
-    for msg in OUTBOX_DB.all():
-        if msg['receiver_public_signing_key'] == authorization['public_signing_key']:
+    for msg in PRIVATE_MESSAGE_MANAGER.all_outbox_messages():
+        if msg['public_signing_key'] == authorization['public_signing_key']:
 
             messages += [msg]
 
-    encrypted_messages = dh_sessions.encrypt_server_response(
-        PRIVATE_SIGNING_KEY_FILE,
-        PUBLIC_SIGNING_KEY_FILE,
+    encrypted_messages = ENCRYPTION_MANAGER.encrypt_server_response(
         authorization,
         json.dumps(messages))
 
@@ -423,22 +419,8 @@ def api_outbox_get(authorization):
 @require_authentication
 @request_body(OutboxMessage)
 def api_outbox_post(message):
-    message_id = ''.join([random.choice('0123456789abcdef')
-                          for i in range(30)])
 
-    message['id'] = message_id
-    message['sent_datetime'] = datetime.datetime.utcnow().isoformat()
-
-    OUTBOX_DB.insert(message)
-
-    with open(PUBLIC_SIGNING_KEY_FILE, 'r') as f:
-        public_signing_key = f.read().strip()
-
-    resp = requests.post(message['receiver_url'] + '/api/inbox',
-                         data=json.dumps({
-                             'url': BLADE_URL,
-                             'public_signing_key': public_signing_key
-                         }))
+    PRIVATE_MESSAGE_MANAGER.add_outbox_message(message)
 
     return 'ok', 200
 
@@ -447,7 +429,7 @@ def api_outbox_post(message):
 @require_authentication
 def api_outbox_delete(message_id):
 
-    OUTBOX_DB.remove(Query().id == message_id)
+    PRIVATE_MESSAGE_MANAGER.remove_outbox_message_with_id(message_id)
 
     return 'ok', 200
 
@@ -459,25 +441,22 @@ def api_outbox_delete(message_id):
 def api_feed_get(authorization, last_seen):
 
     if last_seen:
-        found = FEED_DB.search(Query().id == last_seen)
+        found = FEED_MANAGER.message_with_id(last_seen)
         if found:
-            messages = FEED_DB.search((Query().publish_datetime >= found[0]['publish_datetime']) &
-                                      (Query().id != last_seen))
+            messages = FEED_MANAGER.messages_after(found)
         else:
-            messages = FEED_DB.all()
+            messages = FEED_MANAGER.all_messages()
     else:
-        messages = FEED_DB.all()
+        messages = FEED_MANAGER.all_messages()
 
     if authorization:
-        messages = [msg for msg in messages if permissions.permitted_to_view_message(
-            PERMISSIONS_GROUPS_DB, PERMISSIONS_BLADES_DB, authorization['public_signing_key'], msg['permissions_categories'])]
+        messages = [msg for msg in messages if PERMISSIONS_MANAGER.permitted_to_view_message(
+            authorization['public_signing_key'], msg['permissions_categories'])]
 
         for msg in messages:
             msg.pop('permissions_categories', None)
 
-        encrypted_message = dh_sessions.encrypt_server_response(
-            PRIVATE_SIGNING_KEY_FILE,
-            PUBLIC_SIGNING_KEY_FILE,
+        encrypted_message = ENCRYPTION_MANAGER.encrypt_server_response(
             authorization,
             json.dumps(messages))
 
@@ -485,8 +464,8 @@ def api_feed_get(authorization, last_seen):
 
     else:
 
-        messages = [msg for msg in messages if permissions.permitted_to_view_message(
-            PERMISSIONS_GROUPS_DB, PERMISSIONS_BLADES_DB, None, msg['permissions_categories'])]
+        messages = [msg for msg in messages if PERMISSIONS_MANAGER.permitted_to_view_message(
+            None, msg['permissions_categories'])]
 
         for msg in messages:
             msg.pop('permissions_categories', None)
@@ -498,7 +477,7 @@ def api_feed_get(authorization, last_seen):
 @require_authentication
 @request_body(FeedMessage)
 def api_feed_post(message):
-    id = DATA_STORE.add_feed_message(message)
+    id = FEED_MANAGER.add_feed_message(message)
 
     return id, 200
 
@@ -506,21 +485,23 @@ def api_feed_post(message):
 @app.route('/api/feed/<message_id>', methods=['DELETE'])
 @require_authentication
 def api_feed_id_delete(message_id):
-    FEED_DB.remove(Query().id == message_id)
+
+    FEED_MANAGER.remove_message(message_id)
 
     return 'ok', 200
 
 
 @app.route('/api/feed_attachments/<attachment_name>', methods=['GET'])
 def feed_attachments_id_get(attachment_name):
-    return send_from_directory(DATA_STORE.feed_attachments_dir, attachment_name)
+
+    return send_from_directory(FEED_MANAGER.feed_attachments_dir, attachment_name)
 
 
 @app.route('/api/subscriptions', methods=['GET'])
 @require_authentication
 def api_subscriptions_get():
 
-    subs = DATA_STORE.subscriptions()
+    subs = SUBSCRIPTIONS_MANAGER.subscriptions()
 
     return json.dumps(subs)
 
@@ -530,7 +511,7 @@ def api_subscriptions_get():
 @request_body(Subscription)
 def api_subscriptions_post(blade_url):
 
-    DATA_STORE.add_subscription(blade_url)
+    SUBSCRIPTIONS_MANAGER.add_subscription(blade_url)
 
     return 'ok', 200
 
@@ -539,7 +520,7 @@ def api_subscriptions_post(blade_url):
 @require_authentication
 def api_subscription_delete(sub_id):
 
-    DATA_STORE.remove_subscription(sub_id)
+    SUBSCRIPTIONS_MANAGER.remove_subscription(sub_id)
 
     return 'ok', 200
 
@@ -550,7 +531,7 @@ def api_permissions_groups_get():
 
     summaries = []
 
-    for grp in PERMISSIONS_GROUPS_DB.all():
+    for grp in PERMISSIONS_MANAGER.all_groups():
         summaries += [{
             'id': grp['id'],
             'name': grp['name'],
@@ -571,7 +552,7 @@ def api_permissions_groups_post(grp):
 
     grp['id'] = group_id
 
-    PERMISSIONS_GROUPS_DB.insert(grp)
+    PERMISSIONS_MANAGER.add_group(grp)
 
     return 'ok', 200
 
@@ -580,7 +561,7 @@ def api_permissions_groups_post(grp):
 @require_authentication
 def api_permissions_groups_id_get(group_id):
 
-    found = PERMISSIONS_GROUPS_DB.search(Query().id == group_id)
+    found = PERMISSIONS_MANAGER.permissions_for_group(group_id)
 
     if found:
         return json.dumps(found[0]), 200
@@ -594,8 +575,8 @@ def api_permissions_groups_id_get(group_id):
 @request_body(PermissionsGroup)
 def api_permissions_groups_id_put(grp, group_id):
 
-    if PERMISSIONS_GROUPS_DB.search(Query().id == group_id):
-        PERMISSIONS_GROUPS_DB.update(grp, Query().id == group_id)
+    if PERMISSIONS_MANAGER.permissions_for_group(group_id):
+        PERMISSIONS_MANAGER.update_group(group_id, grp)
 
         return 'ok', 200
 
@@ -608,7 +589,7 @@ def api_permissions_groups_id_put(grp, group_id):
 @require_authentication
 def api_permissions_groups_id_delete(group_id):
 
-    PERMISSIONS_GROUPS_DB.remove(Query().id == group_id)
+    PERMISSIONS_MANAGER.remove_group(group_id)
 
     return 'ok', 200
 
@@ -617,10 +598,11 @@ def api_permissions_groups_id_delete(group_id):
 @require_authentication
 def api_permissions_blades_get():
 
-    permissions_blades = PERMISSIONS_BLADES_DB.all()
+    permissions_blades = PERMISSIONS_MANAGER.all_blades()
 
     for perm_blade in permissions_blades:
-        perm_blade['id'] = encode_public_key(perm_blade['public_signing_key'])
+        perm_blade['id'] = public_keys.encode_public_key(
+            perm_blade['public_signing_key'])
 
     return json.dumps(blades)
 
@@ -629,10 +611,9 @@ def api_permissions_blades_get():
 @require_authentication
 def api_permissions_blades_id_get(blade_id):
 
-    public_signing_key = decode_public_key(blade_id)
+    public_signing_key = public_keys.decode_public_key(blade_id)
 
-    found = PERMISSIONS_BLADES_DB.search(
-        Query().public_signing_key == public_signing_key)
+    found = PERMISSIONS_MANAGER.permissions_for_blade(public_signing_key)
 
     if found:
         return json.dumps(found[0]['permissions']), 200
@@ -648,15 +629,7 @@ def api_permissions_blades_id_put(perms, blade_id):
 
     public_signing_key = decode_public_key(blade_id)
 
-    if PERMISSIONS_BLADES_DB.search(Query().public_signing_key == public_signing_key):
-        PERMISSIONS_BLADES_DB.update(
-            {'permissions': perms}, Query().public_signing_key == public_signing_key)
-
-    else:
-        PERMISSIONS_BLADES_DB.insert({
-            'public_signing_key': public_signing_key,
-            'permissions': perms
-        })
+    PERMISSIONS_MANAGER.set_permissions_for_blade(public_signing_key, perms)
 
     return 'ok', 200
 
@@ -667,8 +640,7 @@ def api_permissions_blades_id_delete(blade_id):
 
     public_signing_key = decode_public_key(blade_id)
 
-    PERMISSIONS_BLADES_DB.remove(
-        Query().public_signing_key == public_signing_key)
+    PERMISSIONS_MANAGER.set_permissions_for_blade(public_signing_key, [])
 
     return 'ok', 200
 
@@ -678,7 +650,7 @@ def api_permissions_blades_id_delete(blade_id):
 @require_authentication
 def api_timeline_get():
 
-    messages = DATA_STORE.timeline()
+    messages = TIMELINE_MANAGER.timeline()
 
     return json.dumps(messages), 200
 
@@ -688,8 +660,5 @@ if __name__ == '__main__':
         port = int(sys.argv[sys.argv.index('--port') + 1])
     else:
         port = 1337
-
-    if '--url' in sys.argv:
-        BLADE_URL = sys.argv[sys.argv.index('--url') + 1]
 
     app.run(port=port, debug=True)

@@ -12,7 +12,7 @@ button {
   font-size: 1em;
 }
 
-input[type="password"] {
+input[type="password"], input[type="text"] {
   border: 1px solid #006600;
   padding: 5px;
 }
@@ -90,6 +90,10 @@ nav a {
   resize: vertical;
   width: 490px;
   min-height: 50px;
+}
+
+#new_message_receiver {
+  margin-bottom: 10px;
 }
 
 #new_message_buttons {
@@ -189,15 +193,15 @@ nav a {
 
 }
 
-#subscriptions {
+#subscriptions, #subscribers {
   margin-top: 20px;
 }
 
-#subscriptions ul {
+#subscriptions ul, #subscribers ul {
   list-style-type: none;
 }
 
-.subscription {
+.subscription, .subscriber {
   display: flex;
   flex-direction: row;
   flex-wrap: nowrap;
@@ -207,7 +211,7 @@ nav a {
   border-top: 1px solid #999999;
 }
 
-.subscription_left_column {
+.subscription_left_column, .subscriber_left_column {
   width: 50px;
   display: flex;
   flex-direction: row;
@@ -215,26 +219,26 @@ nav a {
   justify-content: flex-end;
 }
 
-.subscription_avatar {
+.subscription_avatar, .subscriber_avatar {
   width: auto;
   height: auto;
   max-width: 50px;
   max-height: 50px;
 }
 
-.subscription_right_column {
+.subscription_right_column, .subscriber_right_column {
   margin-left: 10px;
 }
 
-.subscription_blade_url {
+.subscription_blade_url, .subscriber_blade_url {
   margin-top: 10px;
 }
 
-.subscription_public_signing_key {
+.subscription_public_signing_key, .subscriber_public_signing_key {
   margin-top: 10px;
 }
 
-.subscription_bio {
+.subscription_bio, .subscriber_bio {
   margin-top: 10px;
 }
 

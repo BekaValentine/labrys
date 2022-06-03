@@ -2,4 +2,36 @@
 {% block title %}Labrys - Private Messages{% endblock %}
 {% block content %}
       <h2>private messages</h2>
+
+      <div id="private_messages">
+
+        <div id="new_message">
+          <form action="/private_messages" method="post" enctype="multipart/form-data">
+            <p id="new_message_receiver">
+              <input type="text" name="receiver" list="known_blades" placeholder="receiver" />
+              <datalist id="known_blades">
+                {% for known_blade in known_blades %}
+                <!-- <option value="Boston"> -->
+                <option value="{{known_blade["public_signing_key"]}}">{{known_blade["display_name"]}} ({{known_blade["public_signing_key"]}})</option>
+                {% endfor %}
+              </datalist>
+            </p>
+
+            <p id="new_message_text">
+              <textarea name="content" placeholder="post a new private message" required></textarea>
+            </p>
+
+            <p id="new_message_buttons">
+              <span>
+                <label for="attachments" class="attachments_label">select attachments</label>
+                <input type="file" id="attachments" name="attachments" multiple onchange="update_file_list()"/>
+                <button type="button" onclick="remove_attachments()">remove attachments</button>
+              </span>
+              <button type="submit">post</button>
+            </p>
+            <p id="attached_files"></p>
+          </form>
+        </div>
+
+      </div>
 {% endblock %}

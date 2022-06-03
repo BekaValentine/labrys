@@ -20,7 +20,7 @@ PID2=$!
 
 echo 'Setting up blade 3'
 python3 setup.py labrys_test_net_temp/blade3 localhost:1339 'lord_nikon' "hacker, dj, gender is a colonialist construct. they/them" password
-cp avatar.jpg labrys_test_net_temp/blade3/identity
+cp nikon_avatar.jpg labrys_test_net_temp/blade3/identity/avatar.jpg
 DATA_DIR=labrys_test_net_temp/blade3 flask run --port 1339&
 PID3=$!
 

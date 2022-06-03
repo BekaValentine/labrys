@@ -2,4 +2,26 @@
 {% block title %}Labrys - Subscribers{% endblock %}
 {% block content %}
       <h2>subscribers</h2>
+
+      <div id="subscribers">
+        {% if subscribers|length == 0 %}
+        <p>no subscribers</p>
+        {% else %}
+        <ul>
+          {% for sub in subscribers %}
+          <li class="subscriber">
+            <div class="subscriber_left_column">
+              <img src="/known_blades/avatars/{{ sub['avatar_filename' ]}}" class="subscriber_avatar" />
+            </div>
+            <div class="subscriber_right_column">
+              <p class="subscriber_display_name">{{ sub['display_name'] }}</p>
+              <p class="subscriber_blade_url"><a href="/blade/{{ sub['url'] }}">{{ sub['url'] }}</a></p>
+              <p class="subscriber_public_signing_key">{{ sub['public_signing_key'] }}</p>
+              <p class="subscriber_bio">{{ sub['bio'] }}</p>
+            </div>
+          </li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+      </div>
 {% endblock %}

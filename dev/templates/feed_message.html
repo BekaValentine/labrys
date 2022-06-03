@@ -1,0 +1,36 @@
+{% extends "base_template.html" %}
+{% block title %}Labrys - Feed{% endblock %}
+{% block content %}
+      <h2>feed message</h2>
+        <div class="message">
+          <div class="message_left_column">
+            <img src="{{ avatar_url }}" class="message_avatar"/>
+          </div>
+          <div class="message_right_column">
+            <div class="message_header">
+              <p class="message_display_name">{{ display_name }}</p>
+              <p class="message_publish_datetime">{{ message['publish_datetime']|formatdatetime }}</p>
+            </div>
+            <p class="message_text">{{ message['content']['text'] }}</p>
+            {% if message['content']['attachments']|length > 0 %}
+            <p class="message_attachments">
+              {% for attachment in message['content']['attachments'] %}
+              {% if attachment['content_type'] == 'image' %}
+              <a href="/api/feed_attachments/{{ attachment['file_name'] }}"><img src="/api/feed_attachments/{{ attachment['file_name'] }}"/></a>
+              {% elif attachment['content_type'] == 'video' %}
+              <video controls src="/api/feed_attachments/{{ attachment['file_name'] }}" width="250px">
+                your browser does't support the <code>video</code> element. download this file <a href="/api/feed_attachments/{{ attachment['file_name'] }}">here</a>.
+              </video>
+              {% elif attachment['content_type'] == 'audio' %}
+              <audio controls src="/api/feed_attachments/{{ attachment['file_name'] }}">
+                your browser does't support the <code>audio</code> element. download this file <a href="/api/feed_attachments/{{ attachment['file_name'] }}">here</a>.
+              </audio>
+              {% else %}
+              <a href="/api/feed_attachments/{{ attachment['file_name'] }}">{{ attachment['file_name'] }}</a>
+              {% endif %}
+              {% endfor %}
+            </p>
+            {% endif %}
+          </div>
+        </div>
+{% endblock %}

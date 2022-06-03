@@ -36,12 +36,10 @@ def check(term, type):
     elif isinstance(type, dict):
         if not isinstance(term, dict):
             return False
-        elif set(type.keys()) != set(term.keys()):
-            return False
         else:
             for key in type:
                 val_type = type[key]
-                if not check(term[key], val_type):
+                if key not in term or not check(term[key], val_type):
                     return False
             return True
 
@@ -166,13 +164,15 @@ class InboxMessage:
 
     @staticmethod
     def parse(sender_info_json):
+
         try:
             sender_info = json.loads(sender_info_json)
         except:
             return None
 
         sender_info_type = {'url': String,
-                            'public_signing_key': String}
+                            'public_signing_key': String,
+                            'type': String}
 
         if not check(sender_info, sender_info_type):
             return None
@@ -189,8 +189,8 @@ class OutboxMessage:
         except:
             return None
 
-        message_type = {'type': String, 'receiver_public_signing_key': String,
-                        'receiver_url': String, 'content': String}
+        message_type = {'type': String, 'public_signing_key': String,
+                        'content': String}
 
         if not check(message, message_type):
             return None
@@ -331,6 +331,18 @@ class PermissionsBlade:
             return None
 
         return perms
+
+
+class FormPrivateMessage:
+
+    @staticmethod
+    def parse(form, files):
+        return {
+            'type': 'private_message',
+            'receiver': form.get('receiver'),
+            'text': form.get('content'),
+            'attachments': files
+        }
 
 
 class BladeAuthorization:
